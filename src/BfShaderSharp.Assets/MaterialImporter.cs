@@ -20,6 +20,7 @@ public static class MaterialImporter
         List<SamplerRecord> samplers = Samplers(context, material);
         int program = context.Shaders.Select(material);
         context.Programs.Add(assign.ShaderArchiveName, assign.ShadingModelName, program);
+        (BlobKey layout, BlobKey block) = Block(context, material);
         RecordWriter writer = new();
         new MaterialRecord(
             assign.ShaderArchiveName,
@@ -33,8 +34,23 @@ public static class MaterialImporter
             [.. material.ShaderParams.Select(p => new ParamRecord(Name(context, p.Key), (byte)p.Value.Type, p.Value.DataOffset))],
             material.ShaderParamData,
             material.RenderState is { } state ? (int)state.Mode : -1,
-            material.RenderState is { } blend ? (int)blend.BlendMode : -1).Write(writer);
+            material.RenderState is { } blend ? (int)blend.BlendMode : -1,
+            layout,
+            block).Write(writer);
         return context.Pack.Add(writer.ToArray(), BlobCodec.Raw);
+    }
+
+    // The uniform block the shader expects, built from the material's parameters, and the layout of the shading model's block.
+    private static (BlobKey Layout, BlobKey Block) Block(AssetContext context, Material material)
+    {
+        if (context.Shaders.LayoutOf(material) is not { } layout) return default;
+        BlobKey layoutKey = context.LayoutKeys.GetOrAdd(layout, l =>
+        {
+            RecordWriter layoutWriter = new();
+            new UniformLayoutRecord(l.Name, l.Size, [.. l.Uniforms.Select(u => new UniformOffset(u.Name, u.Offset))]).Write(layoutWriter);
+            return context.Pack.Add(layoutWriter.ToArray(), BlobCodec.Raw);
+        });
+        return (layoutKey, context.Pack.Add(layout.Build(material, key => Name(context, key)), BlobCodec.Raw));
     }
 
     private static string Name(AssetContext context, string key) => HashedNames.NameOrKey(key, context.Names);

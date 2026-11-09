@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using BfShaderSharp.Materials;
 using BfShaderSharp.Pack;
 using BfShaderSharp.Pack.Records;
 
@@ -23,6 +24,9 @@ public sealed class AssetContext(PackWriter pack, RomfsFiles romfs, ShaderArchiv
 
     // The record blob of each texture imported so far, so a name the game unified into another texture can be given the same record.
     public ConcurrentDictionary<string, BlobKey> TextureRecords { get; } = new(StringComparer.Ordinal);
+
+    // The record blob of each material block layout, so a layout is written once however many materials use it.
+    public ConcurrentDictionary<MaterialBlockLayout, BlobKey> LayoutKeys { get; } = new();
 
     public UnifyTex Unify { get; set; } = UnifyTex.Empty;
 

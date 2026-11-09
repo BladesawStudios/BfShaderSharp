@@ -102,6 +102,8 @@ public sealed class AssetPack : IDisposable
 
     public MaterialRecord Material(BlobKey key) => Record(key, MaterialRecord.Read);
 
+    public UniformLayoutRecord UniformLayout(BlobKey key) => Record(key, UniformLayoutRecord.Read);
+
     public ShapeRecord Shape(BlobKey key) => Record(key, ShapeRecord.Read);
 
     public SkeletonRecord Skeleton(BlobKey key) => Record(key, SkeletonRecord.Read);

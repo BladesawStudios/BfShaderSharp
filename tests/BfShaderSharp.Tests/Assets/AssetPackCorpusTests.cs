@@ -34,6 +34,7 @@ public class AssetPackCorpusTests(ITestOutputHelper output)
                 using AssetPack pack = AssetPack.Open(path);
                 using ZsDic zs = ZsDic.FromRomfs(romfs);
                 foreach (PackEntry entry in pack.Of(PackEntryKind.Model)) Check(pack, entry, result.MissingTextures);
+                Assert.Contains(pack.Of(PackEntryKind.Model), e => pack.Model(e.Name)!.Materials.Any(m => pack.Material(m.Material).Block != default));
                 CheckTexture(pack, zs);
             }
             finally
@@ -59,6 +60,19 @@ public class AssetPackCorpusTests(ITestOutputHelper output)
         {
             MaterialRecord material = pack.Material(reference.Material);
             Assert.True(material.Program >= -1);
+            if (material.Block != default)
+            {
+                UniformLayoutRecord layout = pack.UniformLayout(material.Layout);
+                byte[] block = pack.Bytes(material.Block);
+                Assert.Equal(layout.Size, block.Length);
+                // A plain parameter the layout names sits in the block exactly as the material holds it.
+                foreach (ParamRecord param in material.Params.Where(p => p.Type is not (byte)BfresSharp.Model.Material.ShaderParamType.TexSrt and not (byte)BfresSharp.Model.Material.ShaderParamType.TexSrtEx))
+                {
+                    int at = layout.OffsetOf(param.Name);
+                    int size = BfresSharp.Model.Material.ShaderParam.SizeOf((BfresSharp.Model.Material.ShaderParamType)param.Type);
+                    if (at >= 0 && at + size <= block.Length && param.Offset + size <= material.ParamData.Length) Assert.True(material.ParamData.Span.Slice(param.Offset, size).SequenceEqual(block.AsSpan(at, size)), param.Name);
+                }
+            }
             foreach (SamplerRecord sampler in material.Samplers.Where(s => s.Texture != "")) Assert.True(pack.Texture(sampler.Texture) is not null || missing.Contains(sampler.Texture), sampler.Texture);
         }
     }

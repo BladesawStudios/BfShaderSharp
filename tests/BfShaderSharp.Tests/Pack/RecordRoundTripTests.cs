@@ -35,7 +35,11 @@ public class RecordRoundTripTests
             [new SamplerRecord("albedo", "Tex_A", 1, 1, 2, 0, 1, 3, 42, 0, 13, -0.5f)],
             [new NamePair("tex_albedo", "albedo")],
             [new ParamRecord("tint", 4, 16)],
-            new byte[] { 1, 2, 3, 4 }, 5, 6), (r, w) => r.Write(w), MaterialRecord.Read);
+            new byte[] { 1, 2, 3, 4 }, 5, 6, new BlobKey(7, 8), new BlobKey(9, 10)), (r, w) => r.Write(w), MaterialRecord.Read);
+
+    [Fact]
+    public void AUniformLayoutRoundTrips() =>
+        AssertRoundTrips(new UniformLayoutRecord("gsys_material", 976, [new UniformOffset("ns_tex_mtx0", 0), new UniformOffset("ns_param_color0", 128)]), (r, w) => r.Write(w), UniformLayoutRecord.Read);
 
     [Fact]
     public void AShapeRoundTrips() =>

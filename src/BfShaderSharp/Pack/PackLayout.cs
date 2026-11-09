@@ -9,7 +9,7 @@ namespace BfShaderSharp.Pack;
 internal static class PackLayout
 {
     internal const uint Magic = 0x50414642; // "BFAP"
-    internal const uint Version = 2;
+    internal const uint Version = 3;
     internal const int HeaderSize = 64;
     internal const int BlobRowSize = 40;
 }
