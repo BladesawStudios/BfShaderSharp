@@ -1,5 +1,6 @@
 using System.Text.Json;
 using BfShaderSharp.Bfsha;
+using BfShaderSharp.Lookup;
 using BfShaderSharp.Bnsh;
 
 namespace BfShaderSharp.Preparation;

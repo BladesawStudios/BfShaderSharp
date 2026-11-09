@@ -1,4 +1,5 @@
 using BfShaderSharp.Bfsha;
+using BfShaderSharp.Lookup;
 using BfShaderSharp.Bnsh;
 using BfShaderSharp.Container;
 using BfShaderSharp.Decompile;

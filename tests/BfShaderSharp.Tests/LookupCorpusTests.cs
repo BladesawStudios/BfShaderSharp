@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using BfShaderSharp.Bfsha;
+using BfShaderSharp.Lookup;
 using BfShaderSharp.Tests.Corpus;
 using Xunit.Abstractions;
 

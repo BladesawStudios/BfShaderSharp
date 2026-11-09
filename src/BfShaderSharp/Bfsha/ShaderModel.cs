@@ -2,6 +2,7 @@ using BfShaderSharp.Binary;
 using BfShaderSharp.Bnsh;
 using BfShaderSharp.Container;
 using BfShaderSharp.Errors;
+using BfShaderSharp.Lookup;
 
 namespace BfShaderSharp.Bfsha;
 
@@ -53,11 +54,17 @@ public readonly struct ShaderModel
         return new ShaderProgram(_view, programs + (long)index * ShaderProgram.Size, (long)_view.U64(_at + 0xA8), index);
     }
 
-    /// <summary>One row of 32-bit key words for each program: the static words, then the dynamic words.</summary>
+    // One row of 32-bit key words for each program: the static words, then the dynamic words.
     internal ReadOnlyMemory<byte> KeyTable =>
         _view.Bytes((long)_view.U64(_at + 0x90), (long)ProgramCount * (StaticKeyLength + DynamicKeyLength) * 4);
 
-    public ProgramLookup CreateLookup() => new(this);
+    public ProgramLookup CreateLookup()
+    {
+        List<LookupOption> options = [];
+        AddOptions(options, StaticOptions, isStatic: true);
+        AddOptions(options, DynamicOptions, isStatic: false);
+        return new ProgramLookup(options, KeyTable, StaticKeyLength + DynamicKeyLength, ProgramCount);
+    }
 
     public BnshFile Bnsh
     {
@@ -66,6 +73,17 @@ public readonly struct ShaderModel
             long start = (long)_view.U64(_at + 0xA8);
             if (start == 0) throw new BfShaderFormatException("Shading model has no shader binary", _at + 0xA8);
             return BnshFile.Read(_view.Bytes(start, _view.U32(start + 0x1C)));
+        }
+    }
+
+    // A static option keys the word at its index; a dynamic option's word follows the static words, less its key offset.
+    private void AddOptions(List<LookupOption> options, NamedTable<ShaderOption> table, bool isStatic)
+    {
+        for (int i = 0; i < table.Count; i++)
+        {
+            ShaderOption option = table[i];
+            int word = isStatic ? option.KeyIndex : StaticKeyLength + option.KeyIndex - option.KeyOffset;
+            options.Add(new LookupOption(option.Name, word, option.Mask, option.Shift, option.DefaultChoice, [.. option.Choices.Keys()]));
         }
     }
 

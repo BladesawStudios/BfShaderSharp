@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using BfShaderSharp.Bfsha;
+using BfShaderSharp.Lookup;
 using BfShaderSharp.Decompile;
 using BfShaderSharp.Preparation;
 using BfShaderSharp.Tests.Corpus;
