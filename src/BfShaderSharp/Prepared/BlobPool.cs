@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.IO.Compression;
 using System.Security.Cryptography;
 
@@ -68,8 +69,15 @@ public sealed class BlobPool(int quality = 5)
 
     internal static byte[] Compress(ReadOnlySpan<byte> raw, int quality)
     {
-        byte[] buffer = new byte[BrotliEncoder.GetMaxCompressedLength(raw.Length)];
-        if (!BrotliEncoder.TryCompress(raw, buffer, out int written, quality, 22)) throw new InvalidOperationException("Brotli compression failed");
-        return buffer.AsSpan(0, written).ToArray();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(BrotliEncoder.GetMaxCompressedLength(raw.Length));
+        try
+        {
+            if (!BrotliEncoder.TryCompress(raw, buffer, out int written, quality, 22)) throw new InvalidOperationException("Brotli compression failed");
+            return buffer.AsSpan(0, written).ToArray();
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
     }
 }
