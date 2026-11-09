@@ -11,9 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BfShaderSharp\BfShaderSharp.csproj" />
-    <Reference Include="Ryujinx.Graphics.Shader"><HintPath>..\..\lib\ryujinx\Ryujinx.Graphics.Shader.dll</HintPath></Reference>
-    <Reference Include="Ryujinx.Common"><HintPath>..\..\lib\ryujinx\Ryujinx.Common.dll</HintPath></Reference>
-    <Reference Include="Spv.Generator"><HintPath>..\..\lib\ryujinx\Spv.Generator.dll</HintPath></Reference>
+    <ProjectReference Include="..\..\lib\ryujinx\src\Ryujinx.Graphics.Shader\Ryujinx.Graphics.Shader.csproj" />
   </ItemGroup>
 
   <ItemGroup>

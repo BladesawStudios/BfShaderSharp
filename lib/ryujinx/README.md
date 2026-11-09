@@ -1,6 +1,12 @@
-# Ryujinx shader translator (prebuilt)
+# Ryujinx shader translator (source)
 
-`Ryujinx.Graphics.Shader.dll`, `Ryujinx.Common.dll` and `Spv.Generator.dll` are the Maxwell shader translator of Ryujinx (MIT, see
-`Ryujinx License.txt`), copied unchanged from the ShaderLibrary `CompileTool/Libs` folder. They translate the Maxwell code that
-`BfShaderSharp.Decompile` produces from Switch 2 Ampere code. They are binaries of unrecorded provenance; replace them with a build
-from source (a submodule of the Ryujinx `Ryujinx.Graphics.Shader` project) when one is chosen.
+`src/` holds the Maxwell shader translator of Ryubing (the Ryujinx fork, MIT, see `Ryujinx License.txt`), copied from
+`OneOffs/Ryubing` at commit a61a42681 ("fix updater (#197)"): `Ryujinx.Graphics.Shader` and `Spv.Generator` unchanged, and
+`Ryujinx.Common` trimmed to the few files the translator uses (BitUtils, BitfieldExtensions, ArrayPtr, IArray,
+StructArrayHelpers, ObjectPool) plus a small `EmbeddedResources` that only reads the translator's GLSL helper files.
+`BfShaderSharp.Decompile` references the translator project directly; `Directory.Build.props` here keeps the vendored code
+out of the repository's warnings-as-errors rules. Improvements to the translator go in this folder; note each in this file.
+
+## Changes from upstream
+
+None yet.
