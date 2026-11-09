@@ -24,6 +24,8 @@ public readonly struct ShaderOption
 
     public string Name { get; }
 
+    internal static ShaderOption Read(ByteView view, long at, string name) => new(view, at, name);
+
     public ResDict Choices => new(_view, (long)_view.U64(_at + 8));
 
     public int DefaultChoice => (short)_view.U16(_at + 0x1A);

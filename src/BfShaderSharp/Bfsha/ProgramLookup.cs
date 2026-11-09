@@ -89,7 +89,7 @@ public sealed class ProgramLookup
     private ReadOnlySpan<byte> Row(int program) => _keys.Span.Slice(program * _rowWords * 4, _rowWords * 4);
 
     // A static option's word is its key index; a dynamic option's follows the static words, less the key offset.
-    private void AddSlots(List<Slot> slots, OptionTable table, bool isStatic)
+    private void AddSlots(List<Slot> slots, NamedTable<ShaderOption> table, bool isStatic)
     {
         for (int i = 0; i < table.Count; i++)
         {

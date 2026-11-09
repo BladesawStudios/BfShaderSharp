@@ -22,17 +22,17 @@ public readonly struct ShaderModel
 
     public string Name { get; }
 
-    public OptionTable StaticOptions => Options(0x08);
+    public NamedTable<ShaderOption> StaticOptions => Table(0x08, ShaderOption.Size, ShaderOption.Read);
 
-    public OptionTable DynamicOptions => Options(0x18);
+    public NamedTable<ShaderOption> DynamicOptions => Table(0x18, ShaderOption.Size, ShaderOption.Read);
 
-    public ResDict Attributes => Dict(0x30);
+    public NamedTable<ShaderAttribute> Attributes => Table(0x28, ShaderAttribute.Size, ShaderAttribute.Read);
 
-    public ResDict Samplers => Dict(0x40);
+    public NamedTable<ShaderSampler> Samplers => Table(0x38, ShaderSampler.Size, ShaderSampler.Read);
 
     public ResDict Images => Dict(0x50);
 
-    public ResDict UniformBlocks => Dict(0x60);
+    public NamedTable<ShaderUniformBlock> UniformBlocks => Table(0x58, ShaderUniformBlock.Size, ShaderUniformBlock.Read);
 
     public int DefaultProgramIndex => _view.I32(_at + 0xE0);
 
@@ -71,6 +71,7 @@ public readonly struct ShaderModel
 
     private ResDict Dict(int field) => new(_view, (long)_view.U64(_at + field));
 
-    // An option table's values pointer is at the field and its name dictionary 8 bytes later.
-    private OptionTable Options(int field) => new(_view, (long)_view.U64(_at + field), Dict(field + 8));
+    // A table's values pointer is at the field and its name dictionary 8 bytes later.
+    private NamedTable<T> Table<T>(int field, int stride, Func<ByteView, long, string, T> make) =>
+        new(_view, (long)_view.U64(_at + field), stride, Dict(field + 8), make);
 }
