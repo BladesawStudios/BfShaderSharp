@@ -55,7 +55,13 @@ public class AssetPackCorpusTests(ITestOutputHelper output)
         {
             SkeletalAnimRecord animation = pack.SkeletalAnim(entry.Name)!;
             Assert.NotEmpty(animation.Bones);
-            foreach (CurveRecord curve in animation.Bones.SelectMany(b => b.Curves)) Assert.NotEmpty(curve.Frames);
+            foreach (CurveRecord curve in animation.Bones.SelectMany(b => b.Curves))
+            {
+                Assert.NotEmpty(curve.Frames);
+                // A cubic curve is either compressed, and decodes to a value and slope per key, or holds four plain coefficients a key.
+                if ((curve.Flags & 0x4000) != 0 && (curve.Flags & 0x70) == 0 && curve.Keys.Length == 0) Assert.True(CurveDecoder.CanDecode(curve));
+                if (CurveDecoder.CanDecode(curve)) Assert.All(CurveDecoder.Decode(curve).Values, v => Assert.True(float.IsFinite(v)));
+            }
         }
     }
 
