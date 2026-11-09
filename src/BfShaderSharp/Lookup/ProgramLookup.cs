@@ -71,7 +71,11 @@ public sealed class ProgramLookup
         ReadOnlySpan<byte> row = Row(program);
         Dictionary<string, string> choices = new(_options.Length);
         foreach (LookupOption option in _options)
-            choices[option.Name] = option.Choices[option.ChoiceOf(BinaryPrimitives.ReadUInt32LittleEndian(row[(option.Word * 4)..]))];
+        {
+            int choice = option.ChoiceOf(BinaryPrimitives.ReadUInt32LittleEndian(row[(option.Word * 4)..]));
+            if (choice >= option.Choices.Count) throw new BfShaderFormatException($"Program {program} has choice {choice} of option {option.Name}, which has {option.Choices.Count}");
+            choices[option.Name] = option.Choices[choice];
+        }
         return choices;
     }
 

@@ -21,7 +21,7 @@ public sealed class PreparedModel
         _archive = archive;
         _view = view;
         _at = at;
-        Name = archive.String(checked((int)view.U32(at)));
+        Name = archive.String(view.Count(at));
         ProgramCount = Count(1);
         RowWords = Count(2);
         VariationCount = Count(4);
@@ -46,10 +46,12 @@ public sealed class PreparedModel
         if ((uint)index >= (uint)ProgramCount) throw new ArgumentOutOfRangeException(nameof(index));
         int slots = SamplerCount + BlockCount;
         long variation = Table(3) + (long)index * 4;
-        return new PreparedProgram(_view, (int)_view.U32(variation), Table(4) + (long)index * slots * 4, SamplerCount);
+        int run = _view.Count(variation);
+        if (run >= VariationCount) throw new BfShaderFormatException($"Program {index} names variation {run} of {VariationCount}", variation);
+        return new PreparedProgram(_view, run, Table(4) + (long)index * slots * 4, SamplerCount);
     }
 
-    /// <summary>The blob index of a stage of a variation, or -1 when the variation has no such stage.</summary>
+    // The blob index of a stage of a variation, or -1 when the variation has no such stage.
     public int StageBlob(int variation, ShaderStage stage)
     {
         if ((uint)variation >= (uint)VariationCount) throw new ArgumentOutOfRangeException(nameof(variation));
@@ -78,26 +80,26 @@ public sealed class PreparedModel
 
     private LookupOption ReadOption(long at)
     {
-        int count = checked((int)_view.U32(at + 16));
+        int count = _view.Count(at + 16);
         long choices = (long)_view.U64(at + 24);
         string[] names = new string[count];
-        for (int i = 0; i < count; i++) names[i] = _archive.String(checked((int)_view.U32(choices + (long)i * 4)));
+        for (int i = 0; i < count; i++) names[i] = _archive.String(_view.Count(choices + (long)i * 4));
         return new LookupOption(Str(at), _view.U16(at + 8), _view.U32(at + 4), _view.U8(at + 10), _view.I32(at + 12), names);
     }
 
     private PreparedBlock ReadBlock(long at)
     {
         long uniformsAt = (long)_view.U64(at + 16);
-        PreparedUniform[] uniforms = Read(checked((int)_view.U32(at + 12)), uniformsAt, PreparedLayout.UniformSize,
+        PreparedUniform[] uniforms = Read(_view.Count(at + 12), uniformsAt, PreparedLayout.UniformSize,
             u => new PreparedUniform(Str(u), _view.I32(u + 4), (int)_view.U32(u + 8), (int)_view.U32(u + 12))).ToArray();
         return new PreparedBlock(Str(at), _view.U16(at + 4), _view.U16(at + 6), (int)_view.U32(at + 8), uniforms, _view.I32(at + 24));
     }
 
-    private string Str(long at) => _archive.String(checked((int)_view.U32(at)));
+    private string Str(long at) => _archive.String(_view.Count(at));
 
-    private int Count(int field) => checked((int)_view.U32(_at + field * 4L));
+    private int Count(int field) => _view.Count(_at + field * 4L);
 
-    private long Table(int field) => checked((long)_view.U64(_at + 32 + field * 8L));
+    private long Table(int field) => _view.Position(_at + 32 + field * 8L);
 
     private static List<T> Read<T>(int count, long start, int stride, Func<long, T> read)
     {

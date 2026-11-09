@@ -4,6 +4,7 @@ using BfShaderSharp.Container;
 namespace BfShaderSharp.Bfsha;
 
 /// <summary>A variable inside a uniform block: its name and its byte offset in the block.</summary>
+/// <remarks>Read from the uniform table of a uniform block.</remarks>
 public readonly record struct ShaderUniform(string Name, int Index, int Offset, int BlockIndex)
 {
     internal const int Size = 0x10;

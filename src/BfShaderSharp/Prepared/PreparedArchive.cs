@@ -21,12 +21,12 @@ public sealed class PreparedArchive
     private PreparedArchive(ByteView view)
     {
         _view = view;
-        ModelCount = checked((int)view.U32(8));
+        ModelCount = view.Count(8);
         _modelTable = Position(view, 0x10, (long)ModelCount * 8);
         _stringTable = Position(view, 0x18, 8);
         _blobTable = Position(view, 0x20, 8);
-        StringCount = checked((int)view.U32(_stringTable));
-        BlobCount = checked((int)view.U32(_blobTable));
+        StringCount = view.Count(_stringTable);
+        BlobCount = view.Count(_blobTable);
         Position(view, 0x18, 4 + (long)(StringCount + 1) * 4);
         Position(view, 0x20, 8 + (long)BlobCount * PreparedLayout.BlobEntrySize);
     }
@@ -78,7 +78,7 @@ public sealed class PreparedArchive
         return Encoding.UTF8.GetString(_view.Bytes(data + start, end - start).Span);
     }
 
-    /// <summary>Decompresses a blob: the GLSL of a stage or the default contents of a uniform block.</summary>
+    // Decompresses a blob: the GLSL of a stage or the default contents of a uniform block.
     public byte[] Blob(int index)
     {
         if ((uint)index >= (uint)BlobCount) throw new BfShaderFormatException($"Blob index {index} is out of range", _blobTable);
@@ -95,7 +95,7 @@ public sealed class PreparedArchive
     // Checks that a table the header points at fits in the file, and returns its position.
     private static long Position(ByteView view, int field, long size)
     {
-        long at = checked((long)view.U64(field));
+        long at = view.Position(field);
         if (at < PreparedLayout.HeaderSize || at + size > view.Length) throw new BfShaderFormatException($"Table of {size} bytes runs past the file", at);
         return at;
     }

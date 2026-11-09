@@ -3,6 +3,7 @@ using BfShaderSharp.Binary;
 namespace BfShaderSharp.Bfsha;
 
 /// <summary>The binding slot of a sampler, uniform block or image in the vertex and fragment stages of a program; -1 means unused.</summary>
+/// <remarks>Read from the per-program location tables of a shading model.</remarks>
 public readonly record struct StageLocations(int Vertex, int Fragment);
 
 /// <summary>One program of a shading model: which compiled variation it uses and where it binds samplers, uniform blocks and images.</summary>

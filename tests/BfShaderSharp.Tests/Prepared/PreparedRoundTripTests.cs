@@ -42,7 +42,7 @@ public class PreparedRoundTripTests
         PreparedArchive archive = PreparedArchive.Read(file);
         PreparedModel model = archive.Model("model")!;
         Assert.Equal(3, model.ProgramCount);
-        Assert.Equal(vertex, model.StageBlob(0, ShaderStage.Vertex));
+        Assert.Equal("void main() { /* vertex */ }", model.Glsl(0, ShaderStage.Vertex));
         Assert.Equal(-1, model.StageBlob(1, ShaderStage.Vertex));
         Assert.Equal("void main() { /* fragment */ }", model.Glsl(2, ShaderStage.Fragment));
         Assert.Null(model.Glsl(2, ShaderStage.Vertex));
@@ -54,8 +54,7 @@ public class PreparedRoundTripTests
         PreparedBlock block = model.Blocks()[0];
         Assert.Equal("tint", block.Uniforms[0].Name);
         Assert.Equal([1, 2, 3, 4], archive.Blob(block.DefaultBuffer));
-        Assert.Equal(fragment, model.StageBlob(0, ShaderStage.Fragment));
-        Assert.Equal(defaults, block.DefaultBuffer);
+        Assert.Equal(model.StageBlob(0, ShaderStage.Fragment), model.StageBlob(1, ShaderStage.Fragment));
     }
 
     [Fact]

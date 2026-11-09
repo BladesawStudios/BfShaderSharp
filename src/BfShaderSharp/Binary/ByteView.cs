@@ -41,9 +41,25 @@ public readonly struct ByteView(ReadOnlyMemory<byte> data)
 
     public int I32(long offset) => BinaryPrimitives.ReadInt32LittleEndian(Read(offset, 4));
 
+    // A 32-bit count that fits an int, or a format error: a corrupt count never becomes an overflow.
+    public int Count(long offset)
+    {
+        uint value = U32(offset);
+        if (value > int.MaxValue) throw new BfShaderFormatException($"Count {value} is too large", offset);
+        return (int)value;
+    }
+
+    // A 64-bit file position that fits a long, or a format error.
+    public long Position(long offset)
+    {
+        ulong value = U64(offset);
+        if (value > long.MaxValue) throw new BfShaderFormatException($"Position {value} is too large", offset);
+        return (long)value;
+    }
+
     public ulong U64(long offset) => BinaryPrimitives.ReadUInt64LittleEndian(Read(offset, 8));
 
-    /// <summary>The characters of the string whose length field is at <paramref name="offset"/>.</summary>
+    // The characters of the string whose length field is at the offset.
     public ReadOnlySpan<byte> StringBytes(long offset)
     {
         int length = U16(offset);

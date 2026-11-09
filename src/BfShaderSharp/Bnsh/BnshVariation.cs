@@ -19,7 +19,7 @@ public readonly struct BnshVariation
 
     public int Index { get; }
 
-    /// <summary>The file offset of the variation's table entry.</summary>
+    // The file offset of the variation's table entry.
     public long Offset => _entry;
 
     public ShaderProgramBinary Program => new(_bnsh, (long)_bnsh.U64(_entry + 0x10));

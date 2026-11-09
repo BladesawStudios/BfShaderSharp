@@ -25,7 +25,7 @@ public sealed class BnshFile
         ApiVersion = view.U16(blockOffset + 0x12);
         CodeTarget = view.U32(blockOffset + 0x14);
         CompilerVersion = view.U32(blockOffset + 0x18);
-        VariationCount = checked((int)view.U32(blockOffset + 0x1C));
+        VariationCount = view.Count(blockOffset + 0x1C);
         _variationStart = (long)view.U64(blockOffset + 0x20);
         if (_variationStart + (long)VariationCount * BnshVariation.EntrySize > view.Length)
             throw new BfShaderFormatException($"Variation table of {VariationCount} entries runs past the file", _variationStart);
