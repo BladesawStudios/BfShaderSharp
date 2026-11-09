@@ -24,7 +24,7 @@
 
 - An optional tier that stores textures deswizzled and recompressed, for the fastest GL upload, at the cost of prepare time and size.
 - Switch 2 model packages (`.bfres.mc`, MCPK) are skipped for good: the game does not use them, so those five models are unused.
-- Compressed cubic curves decode with `CurveDecoder` to a value and a slope per key (a cubic Hermite spline); the 0.2% of cubic curves that hold four plain polynomial coefficients a key are left as the file has them. Linear, step and baked compressed curves do not occur in the OOT animation files and are not decoded. The decoded values agree with the differences between keys (median correlation 0.98), but nothing has played them against the game yet, so check the first rendered animation against the game.
+- Compressed cubic curves decode with `CurveDecoder` to a value and a slope per key (a cubic Hermite spline), and the 0.2% flagged as plain keys are rotation curves of a unit quaternion a key (`DecodeRotation`, shortest-arc interpolation; the component order x, y, z, w is assumed from the bone's rotation, not checked). Linear, step and baked compressed curves do not occur in the OOT animation files and are not decoded. The decoded values agree with the differences between keys (median correlation 0.98), but nothing has played them against the game yet.
 - Material animations are stored by material and parameter name, with each uniform's block offset in the material's `UniformLayoutRecord`; a runtime that plays one joins the two by name.
 - `ShaderSource` entries record which archive a program number came from; a reader does not yet check them against a `.bfsp`.
 

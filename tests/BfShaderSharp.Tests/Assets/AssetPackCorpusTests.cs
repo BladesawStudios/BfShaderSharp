@@ -58,8 +58,9 @@ public class AssetPackCorpusTests(ITestOutputHelper output)
             foreach (CurveRecord curve in animation.Bones.SelectMany(b => b.Curves))
             {
                 Assert.NotEmpty(curve.Frames);
-                // A cubic curve is either compressed, and decodes to a value and slope per key, or holds four plain coefficients a key.
-                if ((curve.Flags & 0x4000) != 0 && (curve.Flags & 0x70) == 0 && curve.Keys.Length == 0) Assert.True(CurveDecoder.CanDecode(curve));
+                // A cubic curve is compressed and decodes to a value and slope per key, or is a rotation curve of a quaternion a key.
+                if ((curve.Flags & 0x70) == 0) Assert.True(CurveDecoder.CanDecode(curve) || CurveDecoder.IsRotation(curve));
+                if (CurveDecoder.IsRotation(curve)) Assert.InRange(CurveDecoder.DecodeRotation(curve).Values[0].Sum(v => v * v), 0.99f, 1.01f);
                 if (CurveDecoder.CanDecode(curve)) Assert.All(CurveDecoder.Decode(curve).Values, v => Assert.True(float.IsFinite(v)));
             }
         }

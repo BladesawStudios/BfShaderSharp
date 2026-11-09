@@ -24,6 +24,38 @@ public sealed record HermiteKeys(float[] Frames, float[] Values, float[] Slopes)
     }
 }
 
+/// <summary>The keys of a rotation curve: a unit quaternion (x, y, z, w) at each frame.</summary>
+/// <remarks>Between two keys the quaternions are interpolated along the shorter arc.</remarks>
+public sealed record QuaternionKeys(float[] Frames, float[][] Values)
+{
+    /// <summary>The rotation at a frame as x, y, z, w, clamped to the first and last keys.</summary>
+    public float[] Evaluate(float frame)
+    {
+        int last = Frames.Length - 1;
+        if (last < 0) return [0, 0, 0, 1];
+        if (frame <= Frames[0]) return Values[0];
+        if (frame >= Frames[last]) return Values[last];
+        int segment = 0;
+        while (segment < last - 1 && Frames[segment + 1] <= frame) segment++;
+        float span = Frames[segment + 1] - Frames[segment];
+        float t = span <= 0 ? 1 : (frame - Frames[segment]) / span;
+        float[] a = Values[segment], b = Values[segment + 1];
+        float dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+        float sign = dot < 0 ? -1 : 1;
+        float wa = 1 - t, wb = t * sign;
+        if (MathF.Abs(dot) < 0.9995f)
+        {
+            float angle = MathF.Acos(MathF.Abs(dot)), sin = MathF.Sin(angle);
+            wa = MathF.Sin((1 - t) * angle) / sin;
+            wb = MathF.Sin(t * angle) / sin * sign;
+        }
+
+        float[] result = [wa * a[0] + wb * b[0], wa * a[1] + wb * b[1], wa * a[2] + wb * b[2], wa * a[3] + wb * b[3]];
+        float length = MathF.Sqrt(result[0] * result[0] + result[1] * result[1] + result[2] * result[2] + result[3] * result[3]);
+        return length > 0 ? [result[0] / length, result[1] / length, result[2] / length, result[3] / length] : [0, 0, 0, 1];
+    }
+}
+
 /// <summary>Decodes the compressed cubic curves of Switch 2 model files.</summary>
 /// <remarks>
 /// A curve of float keys holds a float value and a float slope for each key and nothing else. Otherwise the key bytes are two floats, then for each key an unsigned value and an unsigned slope, a byte each for 8-bit curves
@@ -46,6 +78,16 @@ public static class CurveDecoder
     private static bool Narrow(CurveRecord curve) => (curve.Flags & KeyTypeMask) is Int16Keys or ByteKeys;
 
     private static int Width(CurveRecord curve) => (curve.Flags & KeyTypeMask) switch { Int16Keys => 2, ByteKeys => 1, _ => 4 };
+
+    /// <summary>Whether the curve is a rotation curve holding four floats a key, which the file marks with the plain keys flag; <see cref="DecodeRotation"/> reads it.</summary>
+    /// <remarks>These curves are not cubic polynomials: every key is a unit quaternion (checked over the OOT files), and they animate the rotation of a bone stored as a quaternion.</remarks>
+    public static bool IsRotation(CurveRecord curve) => (curve.Flags & 0x80) != 0 && curve.Keys.Length == curve.Frames.Length * 4 && curve.Frames.Length > 0;
+
+    public static QuaternionKeys DecodeRotation(CurveRecord curve)
+    {
+        if (!IsRotation(curve)) throw new InvalidOperationException("The curve is not a rotation curve");
+        return new QuaternionKeys(curve.Frames, [.. Enumerable.Range(0, curve.Frames.Length).Select(i => curve.Keys[(i * 4)..(i * 4 + 4)])]);
+    }
 
     public static HermiteKeys Decode(CurveRecord curve)
     {

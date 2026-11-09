@@ -35,4 +35,17 @@ public class CurveDecoderTests
         Assert.False(CurveDecoder.CanDecode(Curve(0x10, [0, 1], [], 1, 0)));
         Assert.Throws<InvalidOperationException>(() => CurveDecoder.Decode(Curve(0x10, [0, 1], [], 1, 0)));
     }
+
+    [Fact]
+    public void RotationKeysInterpolateAlongTheShorterArcAndStayUnit()
+    {
+        float h = MathF.Sqrt(0.5f);
+        CurveRecord curve = new(0x4081, 0, 0, 10, 0, 0, 0, 0, [0, 10], [0, 0, 0, 1, 0, 0, h, h], [], [], []);
+        Assert.True(CurveDecoder.IsRotation(curve));
+        float[] middle = CurveDecoder.DecodeRotation(curve).Evaluate(5);
+        Assert.Equal(MathF.Sin(MathF.PI / 8), middle[2], 4);
+        Assert.Equal(MathF.Cos(MathF.PI / 8), middle[3], 4);
+        Assert.Equal(1f, MathF.Sqrt(middle.Sum(v => v * v)), 4);
+        Assert.Equal([0f, 0, h, h], CurveDecoder.DecodeRotation(curve).Evaluate(20));
+    }
 }
