@@ -40,6 +40,10 @@ internal sealed class OpcodeTable
         SpecialRegisterLowering.Register(table);
         UniformCompareLowering.Register(table);
         GlobalMemoryLowering.Register(table);
+        FloatToIntegerLowering.Register(table);
+        TextureQueryLowering.Register(table);
+        TexelFetchLowering.Register(table);
+        GatherLowering.Register(table);
         return table;
     }
 }

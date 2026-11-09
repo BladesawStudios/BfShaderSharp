@@ -12,6 +12,8 @@ internal static class SharedMemoryLowering
     public static void Register(OpcodeTable table)
     {
         table.Add(Nop, 0x918);
+        table.Add(DependencyBarrier, 0x91a);
+        table.Add(CommitCopyGroup, 0x9af);
         table.Add(MemoryBarrier, 0x992);
         table.Add(ErrorBarrier, 0x9ab);
         table.Add(WorkgroupBarrier, 0xb1d);
@@ -101,6 +103,23 @@ internal static class SharedMemoryLowering
         bool store = opcode != 0x984;
         uint data = store ? c.Bits(32, 8) : (uint)c.Dest;
         c.Emit((store ? 0xef58000000000000UL : 0xef48000000000000UL) | c.Predicate | data | ((ulong)address << 8) | ((ulong)c.Bits(40, 24) << 20) | ((ulong)width << 48));
+        return true;
+    }
+
+    // DEPBAR.LE: scoreboard waits are represented by IR data dependencies; scoreboard 0x8000 waits on copy groups, whose copies are synchronous, so only their stores become visible.
+    private static bool DependencyBarrier(InstructionContext c)
+    {
+        uint scoreboard = c.Insn.W1 & ~0xfffU;
+        if (c.Insn.W0 != 0x791a || (c.Insn.W1 & ~0x7fffU) != 0x8000 || c.Insn.W2 != 0) return c.Fail("native dependency barrier mode");
+        if (c.State.UsesAsyncCopy && scoreboard == 0x8000) c.Emit(0xef98000000000000UL | c.Predicate);
+        return true;
+    }
+
+    // LDGDEPBAR: commit a copy group (the copies are already complete).
+    private static bool CommitCopyGroup(InstructionContext c)
+    {
+        if (c.Insn.W0 != 0x79af || c.Insn.W1 != 0 || c.Insn.W2 != 0) return c.Fail("native copy-group commit mode");
+        c.Emit(0xef98000000000000UL | c.Predicate);
         return true;
     }
 }
