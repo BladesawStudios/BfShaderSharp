@@ -15,6 +15,7 @@ internal static class SpecialRegisterLowering
     {
         table.Add(Read, 0x919, 0x9c3);
         table.Add(Discard, 0x95b);
+        table.Add(ClockZero, 0x805);
     }
 
     private static bool Supported(uint special) =>
@@ -43,6 +44,15 @@ internal static class SpecialRegisterLowering
     {
         if (c.Insn.W1 != 0 || c.Insn.W2 != 0x03800000) return c.Fail("native fragment discard mode");
         c.Emit(0xe33000000000000fUL | c.Predicate);
+        return true;
+    }
+
+    // CS2R SRZ: the zero special register, read into a register pair.
+    private static bool ClockZero(InstructionContext c)
+    {
+        if (c.Bits(72, 8) != 255 || c.Bits(80, 1) == 0 || c.Dest >= 249) return c.Fail("native special-register read");
+        c.MovImm((uint)c.Dest, 0);
+        c.MovImm((uint)c.Dest + 1, 0);
         return true;
     }
 }

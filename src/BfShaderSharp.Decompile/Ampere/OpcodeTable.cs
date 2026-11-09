@@ -44,6 +44,22 @@ internal sealed class OpcodeTable
         TextureQueryLowering.Register(table);
         TexelFetchLowering.Register(table);
         GatherLowering.Register(table);
+        TextureSampleLowering.Register(table);
+        FloatArithmeticLowering.Register(table);
+        AttributeLowering.Register(table);
+        LocalMemoryLowering.Register(table);
+        MoveLowering.Register(table);
+        LeaLowering.Register(table);
+        SelectLowering.Register(table);
+        CompareLowering.Register(table);
+        ShiftLowering.Register(table);
+        IntegerToFloatLowering.Register(table);
+        SpecialFunctionLowering.Register(table);
+        IntegerAddLowering.Register(table);
+        BranchLowering.Register(table);
+        CallLowering.Register(table);
+        ExitLowering.Register(table);
+        StageBufferLowering.Register(table);
         return table;
     }
 }
