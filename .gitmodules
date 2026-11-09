@@ -1,0 +1,3 @@
+[submodule "lib/vendor/ZsDicSharp"]
+	path = lib/vendor/ZsDicSharp
+	url = https://github.com/BladesawStudios/ZsDicSharp

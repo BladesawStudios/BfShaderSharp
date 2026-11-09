@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>BfShaderSharp</RootNamespace>
+    <AssemblyName>BfShaderSharp</AssemblyName>
+    <Version>0.1.0</Version>
+    <Description>Reader for Nintendo BFSHA shader archives and BNSH shader binaries on Switch and Switch 2.</Description>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BfShaderSharp.Tests" />
+  </ItemGroup>
+
+</Project>
