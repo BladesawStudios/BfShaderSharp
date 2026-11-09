@@ -68,6 +68,8 @@ internal sealed class InstructionContext
 
     public uint Bits(int offset, int count) => Insn.Bits(offset, count);
 
+    public static ulong Flag(bool value) => value ? 1UL : 0UL;
+
     public bool Fail(string reason) => State.Fail(Index, reason);
 
     public void Emit(ulong word) => Output.Add(word);

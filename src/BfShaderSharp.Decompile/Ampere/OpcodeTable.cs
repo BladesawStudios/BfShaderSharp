@@ -25,6 +25,21 @@ internal sealed class OpcodeTable
     private static OpcodeTable Build()
     {
         OpcodeTable table = new();
+        HalfFloatLowering.Register(table);
+        IntegerMultiplyLowering.Register(table);
+        WideMultiplyLowering.Register(table);
+        WarpLowering.Register(table);
+        PredicateLowering.Register(table);
+        UniformDatapathLowering.Register(table);
+        GradientTextureLowering.Register(table);
+        AtomicLowering.Register(table);
+        SurfaceLowering.Register(table);
+        BitManipulationLowering.Register(table);
+        SharedMemoryLowering.Register(table);
+        MatrixLowering.Register(table);
+        SpecialRegisterLowering.Register(table);
+        UniformCompareLowering.Register(table);
+        GlobalMemoryLowering.Register(table);
         return table;
     }
 }
