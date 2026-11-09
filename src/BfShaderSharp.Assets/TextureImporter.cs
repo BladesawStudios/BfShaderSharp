@@ -14,9 +14,12 @@ namespace BfShaderSharp.Assets;
 /// </remarks>
 public static class TextureImporter
 {
-    public static int Import(AssetContext context, string path)
+    public static int Import(AssetContext context, string path) => Import(context, File.ReadAllBytes(path), path);
+
+    /// <summary>Stores a texture file given as bytes; source names it in errors.</summary>
+    public static int Import(AssetContext context, byte[] file, string source)
     {
-        byte[] file = File.ReadAllBytes(path);
+        string path = source;
         bool compressed = ZsDic.IsCompressed(file);
         byte[] bntx = compressed ? context.Romfs.Dictionaries.Decompress(file, path) : file;
         BntxFile textures = BntxFile.Load(bntx);

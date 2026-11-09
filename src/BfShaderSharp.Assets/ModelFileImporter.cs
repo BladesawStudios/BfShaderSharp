@@ -35,11 +35,14 @@ public sealed class ModelFileImporter(AssetContext context)
         }
     }
 
-    public void Import(string path)
+    public void Import(string path) => Import(RomfsFiles.StemOf(path), Path.GetFileName(path), () => context.Romfs.Read(path));
+
+    /// <summary>Imports a model file given as bytes under a name; the file name is used in failure reports.</summary>
+    public void Import(string stem, string fileName, Func<byte[]> read)
     {
         try
         {
-            byte[] bytes = context.Romfs.Read(path);
+            byte[] bytes = read();
             if (BfresFile.IsPackage(bytes))
             {
                 Interlocked.Increment(ref _skipped);
@@ -47,7 +50,6 @@ public sealed class ModelFileImporter(AssetContext context)
             }
 
             ResFile file = BfresFile.Read(bytes);
-            string stem = RomfsFiles.StemOf(path);
             Interlocked.Add(ref _animations, AnimationImporter.Import(context, stem, file));
             foreach (ResModel model in file.Models.Values)
             {
@@ -63,7 +65,7 @@ public sealed class ModelFileImporter(AssetContext context)
         }
         catch (BfresFormatException exception)
         {
-            lock (_failures) _failures.Add((Path.GetFileName(path), exception.Message));
+            lock (_failures) _failures.Add((fileName, exception.Message));
         }
     }
 }

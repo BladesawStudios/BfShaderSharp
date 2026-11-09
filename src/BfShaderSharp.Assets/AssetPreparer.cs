@@ -31,7 +31,7 @@ public static class AssetPreparer
         return new AssetResult(files.Count, models.Models, models.Materials, textures, models.Animations, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);
     }
 
-    private static (int Textures, List<string> Missing) ImportTextures(AssetContext context, AssetOptions options, ParallelOptions parallel)
+    internal static (int Textures, List<string> Missing) ImportTextures(AssetContext context, AssetOptions options, ParallelOptions parallel)
     {
         List<string> missing = [];
         // A name with no file of its own that the unify table maps to another texture is stored as another entry for that texture.
@@ -40,7 +40,7 @@ public static class AssetPreparer
         {
             TextureSelection.All => context.Romfs.TextureFiles(),
             TextureSelection.None => [],
-            _ => [.. context.UsedTextures.Keys.Order(StringComparer.Ordinal).Select(name => Locate(context, name, aliases) ?? Missing(missing, name)).OfType<string>().Distinct()],
+            _ => [.. context.UsedTextures.Keys.Where(name => !context.TextureRecords.ContainsKey(name)).Order(StringComparer.Ordinal).Select(name => Locate(context, name, aliases) ?? Missing(missing, name)).OfType<string>().Distinct()],
         };
         int textures = 0;
         Parallel.ForEach(paths, parallel, path => Interlocked.Add(ref textures, TextureImporter.Import(context, path)));

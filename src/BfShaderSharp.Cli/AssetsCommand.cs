@@ -32,6 +32,20 @@ internal static class AssetsCommand
         return 0;
     }
 
+    // bfshader model: prepares one model file that is not in the dump, such as a modded one, into a pack of its own.
+    internal static int Model(string[] args)
+    {
+        using RomfsFiles romfs = new(args[1]);
+        byte[] model = romfs.Read(args[2]);
+        List<byte[]> textures = [.. Values(args, "--texture").Select(romfs.Read)];
+        using FileStream output = File.Create(args[3]);
+        AssetResult result = ModelAssetPreparer.Prepare(new AssetOptions(args[1], []), RomfsFiles.StemOf(args[2]), model, textures, output);
+        Console.WriteLine($"{result.Models} models, {result.Materials} materials, {result.Textures} textures, {result.Animations} animations, {result.PackBytes / 1048576.0:F1} MB");
+        foreach ((string file, string reason) in result.Failures) Console.WriteLine($"  {file}: {reason}");
+        if (result.MissingTextures.Count > 0) Console.WriteLine($"{result.MissingTextures.Count} sampled textures have no file: {string.Join(", ", result.MissingTextures.Take(5))}");
+        return result.Failures.Count == 0 ? 0 : 1;
+    }
+
     internal static int Inspect(string[] args)
     {
         using AssetPack pack = AssetPack.Open(args[1]);
