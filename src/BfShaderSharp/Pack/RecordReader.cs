@@ -29,6 +29,15 @@ public sealed class RecordReader(ReadOnlyMemory<byte> bytes)
         return count;
     }
 
+    // A list written by RecordWriter.List; minimumItemSize is the fewest bytes one item can take.
+    public List<T> List<T>(int minimumItemSize, Func<RecordReader, T> read)
+    {
+        int count = Count(minimumItemSize);
+        List<T> items = new(count);
+        for (int i = 0; i < count; i++) items.Add(read(this));
+        return items;
+    }
+
     public string String()
     {
         int length = _view.U16(_position);

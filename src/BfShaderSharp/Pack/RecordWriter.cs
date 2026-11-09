@@ -40,5 +40,11 @@ public sealed class RecordWriter
         _sink.Bytes(bytes);
     }
 
+    public void List<T>(IReadOnlyCollection<T> items, Action<RecordWriter, T> write)
+    {
+        Count(items.Count);
+        foreach (T item in items) write(this, item);
+    }
+
     public byte[] ToArray() => _sink.Written.ToArray();
 }

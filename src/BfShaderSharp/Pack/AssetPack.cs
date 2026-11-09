@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Text;
 using BfShaderSharp.Errors;
+using BfShaderSharp.Pack.Records;
 using Microsoft.Win32.SafeHandles;
 
 namespace BfShaderSharp.Pack;
@@ -92,6 +93,18 @@ public sealed class AssetPack : IDisposable
     }
 
     public byte[] Bytes(BlobKey key) => Blob(key).Bytes;
+
+    public T Record<T>(BlobKey key, Func<RecordReader, T> read) => read(new RecordReader(Bytes(key)));
+
+    public ModelRecord? Model(string name) => Find(PackEntryKind.Model, name) is { } entry ? Record(entry.Key, ModelRecord.Read) : null;
+
+    public TextureRecord? Texture(string name) => Find(PackEntryKind.Texture, name) is { } entry ? Record(entry.Key, TextureRecord.Read) : null;
+
+    public MaterialRecord Material(BlobKey key) => Record(key, MaterialRecord.Read);
+
+    public ShapeRecord Shape(BlobKey key) => Record(key, ShapeRecord.Read);
+
+    public SkeletonRecord Skeleton(BlobKey key) => Record(key, SkeletonRecord.Read);
 
     private static Dictionary<BlobKey, BlobRow> ReadBlobs(SafeFileHandle file, long length, long table, int count, long end)
     {
