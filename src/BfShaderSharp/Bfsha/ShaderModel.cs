@@ -22,9 +22,9 @@ public readonly struct ShaderModel
 
     public string Name { get; }
 
-    public ResDict StaticOptions => Dict(0x10);
+    public OptionTable StaticOptions => Options(0x08);
 
-    public ResDict DynamicOptions => Dict(0x20);
+    public OptionTable DynamicOptions => Options(0x18);
 
     public ResDict Attributes => Dict(0x30);
 
@@ -46,6 +46,19 @@ public readonly struct ShaderModel
 
     public int DynamicKeyLength => _view.U8(_at + 0xEB);
 
+    public ShaderProgram Program(int index)
+    {
+        if ((uint)index >= (uint)ProgramCount) throw new ArgumentOutOfRangeException(nameof(index));
+        long programs = (long)_view.U64(_at + 0x88);
+        return new ShaderProgram(_view, programs + (long)index * ShaderProgram.Size, (long)_view.U64(_at + 0xA8), index);
+    }
+
+    /// <summary>One row of 32-bit key words for each program: the static words, then the dynamic words.</summary>
+    internal ReadOnlyMemory<byte> KeyTable =>
+        _view.Bytes((long)_view.U64(_at + 0x90), (long)ProgramCount * (StaticKeyLength + DynamicKeyLength) * 4);
+
+    public ProgramLookup CreateLookup() => new(this);
+
     public BnshFile Bnsh
     {
         get
@@ -57,4 +70,7 @@ public readonly struct ShaderModel
     }
 
     private ResDict Dict(int field) => new(_view, (long)_view.U64(_at + field));
+
+    // An option table's values pointer is at the field and its name dictionary 8 bytes later.
+    private OptionTable Options(int field) => new(_view, (long)_view.U64(_at + field), Dict(field + 8));
 }

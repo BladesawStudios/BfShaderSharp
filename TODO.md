@@ -2,7 +2,7 @@
 
 ## Readers
 
-- BFSHA: options, key table and program lookup, attributes, samplers, uniform blocks and their uniforms, per-program binding tables, symbols. Models read today: names, counts, BNSH.
+- BFSHA: attributes, uniform blocks and their uniforms (names, offsets, default buffers), sampler/image names, storage buffers and symbols. Done: option tables, key table, `ProgramLookup`, program records with binding tables.
 - BFSHA versions other than 9 (the old library read 4 to 9); each version is a layout class chosen once.
 - `ResDict.IndexOf` is a linear scan; walk the patricia tree if lookups show up in profiles.
 - Corpus survey: add a time budget and the BotW/TOTK corpora.
