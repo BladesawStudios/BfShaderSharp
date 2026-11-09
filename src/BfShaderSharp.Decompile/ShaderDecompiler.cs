@@ -1,4 +1,5 @@
 using BfShaderSharp.Bnsh;
+using BfShaderSharp.Decompile.Ampere;
 using BfShaderSharp.Errors;
 using Ryujinx.Graphics.Shader.Translation;
 
@@ -20,9 +21,11 @@ public static class ShaderDecompiler
     {
         ReadOnlySpan<byte> bytes = code.ByteCode.Span;
         if (bytes.Length <= NativeHeaderSize) throw new BfShaderFormatException("Stage code is shorter than its header", 0);
-        int tessellation = code.Stage switch { ShaderStage.TessellationControl => 1, ShaderStage.TessellationEvaluation => 2, _ => 0 };
-        ulong[] lowered = AmpereLowering.Lower(bytes[NativeHeaderSize..], code.Stage == ShaderStage.Geometry, tessellation);
-        byte[] image = MaxwellProgram.Build(bytes, lowered);
+        TessellationStage tessellation = code.Stage switch { ShaderStage.TessellationControl => TessellationStage.Control, ShaderStage.TessellationEvaluation => TessellationStage.Evaluation, _ => TessellationStage.None };
+        ReadOnlySpan<byte> instructions = bytes[NativeHeaderSize..];
+        LoweredProgram lowered = AmpereLowerer.Lower(instructions, LoweringOptions.ForStage(instructions, code.Stage == ShaderStage.Geometry, tessellation));
+        if (!lowered.Succeeded) throw new BfShaderUnsupportedException($"Ampere lowering rejected the program: {lowered.Error}", lowered.ErrorOffset);
+        byte[] image = MaxwellProgram.Build(bytes, lowered.Instructions);
         var options = new TranslationOptions(TargetLanguage.Glsl, TargetApi.OpenGL, debug ? TranslationFlags.DebugMode : TranslationFlags.None);
         try
         {
