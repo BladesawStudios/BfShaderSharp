@@ -54,7 +54,7 @@ public class SharcbFileTests
     {
         SharcVariation first = File().Variations[0];
         Assert.Equal(BfShaderSharp.Bnsh.ShaderStage.Vertex, first.ToStageCode().Stage);
-        Assert.Throws<BfShaderUnsupportedException>(() => (first with { Stage = SharcStage.Four }).ToStageCode());
+        Assert.Throws<BfShaderUnsupportedException>(() => (first with { Stage = SharcStage.Task }).ToStageCode());
     }
 
     [Fact]

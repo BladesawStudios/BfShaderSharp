@@ -16,7 +16,7 @@ Ryujinx translator DLLs in `lib/ryujinx` are the remaining platform-neutral depe
 
 ## SHARC files
 
-`SharcbFile.Read` opens a compiled SHARC file (the AGL resolve, sky and post programs, found in `ApplicationPackage` and read with SarcSharp). `Programs` lists each program with its options, and `Variation(program, index, stage).ToStageCode()` gives code for `ShaderDecompiler`.
+`SharcbFile.Read` opens a compiled SHARC file (the AGL resolve, sky and post programs, found in `ApplicationPackage` and read with SarcSharp). `Programs` lists each program with its options, and `Variation(program, index, stage).ToStageCode()` gives code for `ShaderDecompiler`. `SharcPreparer` prepares a whole file into a `.bfsp` (`bfshader prepare <package.sarc.zs> <out.bfsp> --entry AglShader.sharcb`), one model for each program.
 
 ## Prepared files
 

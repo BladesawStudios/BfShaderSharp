@@ -34,7 +34,7 @@ internal static class SharcbReader
     private static SharcVariation ReadVariation(ByteView view, long start, long dataOffset)
     {
         uint type = view.U32(start + 4);
-        if (type > (uint)SharcStage.Five) throw new BfShaderFormatException($"Unknown stage kind {type}", start + 4);
+        if (type > (uint)SharcStage.Mesh) throw new BfShaderFormatException($"Unknown stage kind {type}", start + 4);
         long pos = start + 16;
         long byteCode = dataOffset + view.I32(pos);
         ReadOnlyMemory<byte> control = view.Bytes(pos + view.I32(pos + 12), view.Count(pos + 8));

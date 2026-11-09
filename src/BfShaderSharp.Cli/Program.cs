@@ -8,10 +8,12 @@ using BfShaderSharp.Materials;
 using BfShaderSharp.Bnsh;
 using BfShaderSharp.Preparation;
 using BfShaderSharp.Prepared;
+using BfShaderSharp.Sharc;
+using SarcSharp;
 using ZsDicSharp;
 
 // bfshader list <file.bfsha[.zs]>
-// bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]
+// bfshader prepare <file.bfsha[.zs]|file.sharcb[.zs]|package.sarc[.zs] --entry <name.sharcb>> <out.bfsp> [--quality <0-11>] [--threads <n>]
 // bfshader show <file.bfsp> [<model> <program> <stage>]
 // bfshader assets <romfs> <out.bfap> [--model <pattern>]... [--all-textures|--no-textures] [--linear-textures] [--shaders <folder> [--all-programs]] [--threads <n>]
 // bfshader inspect <file.bfap> [<model>]
@@ -42,10 +44,19 @@ int Prepare()
 {
     int quality = int.TryParse(Option("--quality"), out int q) ? q : 5;
     int threads = int.TryParse(Option("--threads"), out int t) ? t : 0;
-    BfshaFile archive = BfshaFile.Read(Load(args[1]));
+    byte[] input = Load(args[1]);
+    if (args[1].Contains(".sarc", StringComparison.OrdinalIgnoreCase))
+    {
+        string entry = Option("--entry") ?? throw new InvalidOperationException("A SARC package needs --entry <name>");
+        input = SarcFile.FromBinary(input)[entry]?.Data ?? throw new InvalidOperationException($"{entry} is not in the package");
+    }
+
     Stopwatch clock = Stopwatch.StartNew();
     using FileStream output = File.Create(args[2]);
-    PreparationResult result = ArchivePreparer.Prepare(archive, output, quality, threads, new Progress<string>(name => Console.WriteLine($"model {name}")));
+    IProgress<string> progress = new Progress<string>(name => Console.WriteLine($"model {name}"));
+    PreparationResult result = input.AsSpan(0, 4).SequenceEqual("BAHS"u8)
+        ? SharcPreparer.Prepare(SharcbFile.Read(input), output, quality, threads, progress)
+        : ArchivePreparer.Prepare(BfshaFile.Read(input), output, quality, threads, progress);
     Console.WriteLine($"{result.Models} models, {result.Programs} programs, {result.Stages} stages ({result.Decompiled} distinct), {result.Failures.Count} failed, {output.Length / 1048576.0:F1} MB in {clock.Elapsed.TotalSeconds:F1} s");
     foreach (StageFailure failure in result.Failures.Take(10)) Console.WriteLine($"  {failure.Model} variation {failure.Variation} {failure.Stage}: {failure.Reason}");
     return 0;
