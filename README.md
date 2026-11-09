@@ -10,9 +10,16 @@ ShaderStageCode fragment = model.Bnsh.Variation(model.Program(program).Variation
 string glsl = ShaderDecompiler.ToGlsl(fragment);   // BfShaderSharp.Decompile
 ```
 
-Projects: `BfShaderSharp` (readers), `BfShaderSharp.Decompile` (stage code to GLSL), `BfShaderSharp.Preparation` (export programs to
-GLSL and JSON for any game), `BfShaderSharp.Cli` (`bfshader list|export`). The decompiler needs the native lowering DLL from
+Projects: `BfShaderSharp` (readers), `BfShaderSharp.Decompile` (stage code to GLSL), `BfShaderSharp.Preparation` (turn an archive into
+one prepared file for any game), `BfShaderSharp.Cli` (`bfshader list|prepare|show`). The decompiler needs the native lowering DLL from
 `tools/AmpereLowerOracle` (set `BFS_AMPERE_LOWER`) and runs on Windows.
+
+## Prepared files
+
+`bfshader prepare Model.bfsha.zs out.bfsp` decompiles every program once (identical stages are translated once) and writes a
+single `BFSP` file: fixed-size tables, a deduplicated string pool, and Brotli-compressed GLSL and default-buffer blobs stored in
+content-hash order, so the output is byte-identical whatever the thread count. `PreparedArchive.Read` reads it in place, and
+`PreparedModel.CreateLookup` finds a program from option choices without loading any GLSL. `bfshader show` inspects one.
 
 ## Build
 

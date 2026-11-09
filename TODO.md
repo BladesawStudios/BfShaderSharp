@@ -17,13 +17,12 @@
 
 ## Preparation
 
-- Switch 2 stages carry no per-stage reflection (the BNSH reflection offset is zero), so the reports' stage slot lists are empty; bindings come from the BFSHA program tables. Bindless textures leave the sampler lists empty too.
+- Switch 2 stages carry no per-stage reflection (the BNSH reflection offset is zero), so prepared files carry no stage slot lists; bindings come from the BFSHA program tables. Bindless textures leave the sampler lists empty too.
 - A GLSL post-pass that names the `fp_t_tcb_*` bindless handles, and sampler names from the BFSHA symbol table.
-- Resume at the variation level (programs sharing a variation decompile it once each).
+- Resume an interrupted prepare; stream blobs to disk instead of holding them all in memory.
 
 ## Later
 
 - `BfShaderSharp.Decompile`: SASS to GLSL, separate from the readers.
-- `BfShaderSharp.Preparation`: game-agnostic extraction of programs, reflection and constants to files.
 - SHARCFB (AGL) archives.
 - Writers, if a use turns up.
