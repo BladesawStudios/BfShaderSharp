@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using System.Text;
+using Utf8Code = Ryujinx.Graphics.Shader.Utf8Code;
 using BfShaderSharp.Bnsh;
 using BfShaderSharp.Decompile;
 using BfShaderSharp.Errors;
@@ -33,7 +33,8 @@ internal sealed class StageCompiler(BlobPool blobs)
         Interlocked.Increment(ref _decompiled);
         try
         {
-            return (blobs.Add(Encoding.UTF8.GetBytes(ShaderDecompiler.ToGlsl(code, debug: true))), null);
+            using Utf8Code glsl = ShaderDecompiler.ToGlslUtf8(code, debug: true);
+            return (blobs.Add(glsl.Span), null);
         }
         catch (BfShaderFormatException ex)
         {

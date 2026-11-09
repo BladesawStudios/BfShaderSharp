@@ -1,6 +1,7 @@
 using BfShaderSharp.Bnsh;
 using BfShaderSharp.Decompile.Ampere;
 using BfShaderSharp.Errors;
+using Utf8Code = Ryujinx.Graphics.Shader.Utf8Code;
 using Ryujinx.Graphics.Shader.Translation;
 
 namespace BfShaderSharp.Decompile;
@@ -19,6 +20,13 @@ public static class ShaderDecompiler
 
     public static string ToGlsl(ShaderStageCode code, bool debug = false)
     {
+        using Utf8Code glsl = ToGlslUtf8(code, debug);
+        return glsl.ToString();
+    }
+
+    /// <summary>Decompiles to UTF-8 text in a buffer reused by the next call on the same thread; dispose it when done.</summary>
+    public static Utf8Code ToGlslUtf8(ShaderStageCode code, bool debug = false)
+    {
         ReadOnlySpan<byte> bytes = code.ByteCode.Span;
         if (bytes.Length <= NativeHeaderSize) throw new BfShaderFormatException("Stage code is shorter than its header", 0);
         TessellationStage tessellation = code.Stage switch { ShaderStage.TessellationControl => TessellationStage.Control, ShaderStage.TessellationEvaluation => TessellationStage.Evaluation, _ => TessellationStage.None };
@@ -29,7 +37,7 @@ public static class ShaderDecompiler
         var options = new TranslationOptions(TargetLanguage.Glsl, TargetApi.OpenGL, debug ? TranslationFlags.DebugMode : TranslationFlags.None);
         try
         {
-            return Translator.CreateContext(0, new GpuAccessor(image, []), options).Translate().Code;
+            return Translator.CreateContext(0, new GpuAccessor(image, []), options).Translate().CodeUtf8!;
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {

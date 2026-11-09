@@ -14,3 +14,4 @@ The CLI runs the translator without tiered compilation (about 20% faster on a fu
 - `NodeHash`: IR and AST nodes (`Operand`, `Operation`, `PhiNode`, `BasicBlock`, `AstNode`) carry a per-thread counter as their hash code instead of the slow default object hash. Collections keyed on them enumerate in insertion order, so nothing depends on the value.
 - `Operand.UseOps` is created on first use, since only local variables have uses.
 - `Operation` copies its operand arrays with a span instead of `Array.Clone`.
+- `Utf8Code`: the GLSL generator writes UTF-8 straight into a per-thread reused buffer (`ShaderProgram.CodeUtf8`) instead of a `StringBuilder`, so a program's text no longer exists as a string, a byte array and a compression buffer on the large object heap. `ShaderProgram.Code` still works and builds the string on demand.

@@ -1,6 +1,5 @@
 using Ryujinx.Graphics.Shader.StructuredIr;
 using Ryujinx.Graphics.Shader.Translation;
-using System.Text;
 
 namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
 {
@@ -21,11 +20,9 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
 
         public OperandManager OperandManager { get; }
 
-        private readonly StringBuilder _sb;
+        private readonly Utf8Code _code;
 
         private int _level;
-
-        private string _indentation;
 
         public CodeGenContext(StructuredProgramInfo info, CodeGenParameters parameters)
         {
@@ -39,22 +36,24 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
 
             OperandManager = new OperandManager();
 
-            _sb = new StringBuilder();
+            _code = new Utf8Code();
         }
 
         public void AppendLine()
         {
-            _sb.AppendLine();
+            _code.AppendNewLine();
         }
 
         public void AppendLine(string str)
         {
-            _sb.AppendLine(_indentation + str);
+            _code.AppendSpaces(_level * Tab.Length);
+            _code.Append(str);
+            _code.AppendNewLine();
         }
 
-        public string GetCode()
+        public Utf8Code GetCode()
         {
-            return _sb.ToString();
+            return _code;
         }
 
         public void EnterScope()
@@ -62,8 +61,6 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
             AppendLine("{");
 
             _level++;
-
-            UpdateIndentation();
         }
 
         public void LeaveScope(string suffix = "")
@@ -75,8 +72,6 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
 
             _level--;
 
-            UpdateIndentation();
-
             AppendLine("}" + suffix);
         }
 
@@ -85,21 +80,5 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
             return Info.Functions[id];
         }
 
-        private void UpdateIndentation()
-        {
-            _indentation = GetIndentation(_level);
-        }
-
-        private static string GetIndentation(int level)
-        {
-            StringBuilder indentationBuilder = new();
-
-            for (int index = 0; index < level; index++)
-            {
-                indentationBuilder.Append(Tab);
-            }
-
-            return indentationBuilder.ToString();
-        }
     }
 }

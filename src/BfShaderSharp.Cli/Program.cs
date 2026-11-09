@@ -17,7 +17,7 @@ switch (args[0])
             Console.WriteLine($"{model.Name}: {model.ProgramCount} programs, {model.StaticOptions.Count + model.DynamicOptions.Count} options, {model.Samplers.Count} samplers");
         return 0;
     case "prepare" when args.Length >= 3:
-        return BfShaderSharp.Cli.GcBudget.Relaunch(args, out int relaunched) ? relaunched : Prepare();
+        return Prepare();
     case "show":
         return Show();
     default:

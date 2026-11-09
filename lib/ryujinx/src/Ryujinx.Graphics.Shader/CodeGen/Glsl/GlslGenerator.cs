@@ -11,7 +11,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
     {
         private const string MainFunctionName = "main";
 
-        public static string Generate(StructuredProgramInfo info, CodeGenParameters parameters)
+        public static Utf8Code Generate(StructuredProgramInfo info, CodeGenParameters parameters)
         {
             CodeGenContext context = new(info, parameters);
 

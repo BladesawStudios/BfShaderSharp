@@ -8,7 +8,12 @@ namespace Ryujinx.Graphics.Shader
         public ShaderProgramInfo Info { get; }
         public TargetLanguage Language { get; }
 
-        public string Code { get; private set; }
+        private string _code;
+
+        /// <summary>The generated GLSL as UTF-8, when the program was generated as GLSL and its text was not replaced by <see cref="Prepend"/>.</summary>
+        public Utf8Code CodeUtf8 { get; private set; }
+
+        public string Code => _code ??= CodeUtf8?.ToString();
         public byte[] BinaryCode { get; }
 
         private ShaderProgram(ShaderProgramInfo info, TargetLanguage language)
@@ -19,7 +24,12 @@ namespace Ryujinx.Graphics.Shader
 
         public ShaderProgram(ShaderProgramInfo info, TargetLanguage language, string code) : this(info, language)
         {
-            Code = code;
+            _code = code;
+        }
+
+        public ShaderProgram(ShaderProgramInfo info, TargetLanguage language, Utf8Code code) : this(info, language)
+        {
+            CodeUtf8 = code;
         }
 
         public ShaderProgram(ShaderProgramInfo info, TargetLanguage language, byte[] binaryCode) : this(info, language)
@@ -29,7 +39,8 @@ namespace Ryujinx.Graphics.Shader
 
         public void Prepend(string line)
         {
-            Code = line + Environment.NewLine + Code;
+            _code = line + Environment.NewLine + Code;
+            CodeUtf8 = null;
         }
     }
 }
