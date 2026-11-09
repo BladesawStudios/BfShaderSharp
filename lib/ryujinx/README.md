@@ -9,4 +9,4 @@ out of the repository's warnings-as-errors rules. Improvements to the translator
 
 ## Changes from upstream
 
-None yet.
+None to the translator source yet. The CLI runs it without tiered compilation (about 20% faster on a full prepare).

@@ -6,6 +6,8 @@
     <AssemblyName>bfshader</AssemblyName>
     <IsPackable>false</IsPackable>
     <ServerGarbageCollection>true</ServerGarbageCollection>
+    <TieredCompilation>false</TieredCompilation>
+    <TieredPGO>false</TieredPGO>
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
   </PropertyGroup>
 
