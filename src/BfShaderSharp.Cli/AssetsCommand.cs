@@ -15,7 +15,7 @@ internal static class AssetsCommand
         string[] patterns = Values(args, "--model");
         int threads = int.TryParse(Values(args, "--threads").FirstOrDefault(), out int t) ? t : 0;
         TextureSelection textures = args.Contains("--all-textures") ? TextureSelection.All : args.Contains("--no-textures") ? TextureSelection.None : TextureSelection.Used;
-        AssetOptions options = new(args[1], patterns, textures, threads);
+        AssetOptions options = new(args[1], patterns, textures, threads, Storage: args.Contains("--linear-textures") ? TextureStorage.Linear : TextureStorage.Native);
         string? shaders = Values(args, "--shaders").FirstOrDefault();
         Stopwatch clock = Stopwatch.StartNew();
         Task<string>? shaderTask = null;
@@ -26,6 +26,7 @@ internal static class AssetsCommand
         Console.WriteLine($"{result.ModelFiles} model files ({result.Skipped} skipped, {result.Failures.Count} failed): {result.Models} models, {result.Materials} materials, {result.Textures} textures");
         Console.WriteLine($"{result.BlobsAdded} blobs offered, {result.BlobsStored} stored; {result.PackBytes / 1048576.0:F0} MB in {assets.TotalSeconds:F1} s");
         foreach ((string file, string reason) in result.Failures.Take(10)) Console.WriteLine($"  {file}: {reason}");
+        if (Values(args, "--missing").FirstOrDefault() is { } report) File.WriteAllLines(report, result.MissingTextures);
         if (result.MissingTextures.Count > 0) Console.WriteLine($"{result.MissingTextures.Count} sampled textures have no file, e.g. {string.Join(", ", result.MissingTextures.Take(3))}");
         if (shaderTask is not null) Console.WriteLine($"{shaderTask.Result}; everything done in {clock.Elapsed.TotalSeconds:F1} s");
         return 0;

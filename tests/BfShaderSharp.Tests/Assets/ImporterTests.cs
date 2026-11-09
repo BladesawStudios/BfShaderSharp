@@ -15,7 +15,7 @@ public sealed class ImporterTests : IDisposable
     private readonly FileStream _stream;
     private readonly RomfsFiles _romfs;
     private readonly PackWriter _writer;
-    private readonly AssetContext _context;
+    private AssetContext _context;
 
     public ImporterTests()
     {
@@ -96,6 +96,29 @@ public sealed class ImporterTests : IDisposable
         Assert.Equal(4, texture.Width);
         Assert.Equal((uint)SurfaceFormat.R8_UNORM, texture.Format);
         Assert.True(pack.Has(texture.File));
+    }
+
+    [Fact]
+    public void ALinearTextureIsOneFrameOfDeswizzledLevelsWithTheirSizes()
+    {
+        _context = new AssetContext(_writer, _romfs, new ShaderArchiveSet(), new Dictionary<ulong, string>(), TextureStorage.Linear, 1);
+        BntxFile file = new();
+        BntxTexture texture = new() { Name = "Tex_L", Width = 4, Height = 4, Format = SurfaceFormat.R8_UNORM, Data = new byte[4096], MipOffsets = { 0 } };
+        for (int i = 0; i < 16; i++) texture.Data[i] = (byte)(i + 1);
+        file.Textures.Add(texture);
+        string path = Path.Combine(_root, "Tex_L.bntx");
+        File.WriteAllBytes(path, file.Save());
+        Assert.Equal(1, TextureImporter.Import(_context, path));
+        _writer.Finish();
+        _stream.Dispose();
+        using AssetPack pack = AssetPack.Open(_pack);
+        TextureRecord record = pack.Texture("Tex_L")!;
+        Assert.Equal(TextureStorage.Linear, record.Storage);
+        Assert.Equal([16u], record.LevelSizes);
+        BlobData frame = pack.Blob(record.File);
+        Assert.Equal(BlobCodec.ZstdFrame, frame.Codec);
+        Assert.Equal(16, frame.RawSize);
+        Assert.Equal(texture.GetDeswizzledData(0, 0), _romfs.Dictionaries.Decompress(frame.Bytes, "x"));
     }
 
     [Fact]

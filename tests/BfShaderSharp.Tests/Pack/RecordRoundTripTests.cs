@@ -24,6 +24,10 @@ public class RecordRoundTripTests
         AssertRoundTrips(new TextureRecord(new BlobKey(1, 2), 3, 0x1b01, 1024, 512, 1, 6, 11), (r, w) => r.Write(w), TextureRecord.Read);
 
     [Fact]
+    public void ALinearTextureRoundTripsItsLevelSizes() =>
+        AssertRoundTrips(new TextureRecord(new BlobKey(1, 2), 0, 0x1b01, 64, 64, 1, 2, 3, TextureStorage.Linear, [4096u, 1024u, 256u, 4096u, 1024u, 256u]), (r, w) => r.Write(w), TextureRecord.Read);
+
+    [Fact]
     public void AMaterialRoundTrips() =>
         AssertRoundTrips(new MaterialRecord("Model", "model", 42, 1,
             [new NamePair("shadows", "1")],

@@ -74,6 +74,37 @@ public class AssetPackCorpusTests(ITestOutputHelper output)
         Assert.True(BntxSharp.BntxFile.IsBntx(bntx));
     }
 
+    // Linear textures decompress to the sizes their record lists, and their first level equals what the native pack's file deswizzles to.
+    [CorpusFact]
+    public void LinearTexturesMatchTheNativeOnesLevelForLevel()
+    {
+        foreach (string shaders in GameFiles.Folders)
+        {
+            string romfs = Path.GetDirectoryName(shaders)!;
+            if (!Directory.Exists(Path.Combine(romfs, "Model"))) continue;
+            string path = Path.Combine(Path.GetTempPath(), $"corpus-{Guid.NewGuid():N}.bfap");
+            using (FileStream stream = File.Create(path)) AssetPreparer.Prepare(new AssetOptions(romfs, ["Land_Deku_Room*"], Storage: TextureStorage.Linear), stream);
+            try
+            {
+                using AssetPack pack = AssetPack.Open(path);
+                using ZsDic zs = ZsDic.FromRomfs(romfs);
+                foreach (PackEntry entry in pack.Of(PackEntryKind.Texture).Take(20))
+                {
+                    TextureRecord record = pack.Texture(entry.Name)!;
+                    Assert.Equal(TextureStorage.Linear, record.Storage);
+                    byte[] levels = zs.Decompress(pack.Blob(record.File).Bytes, "x");
+                    Assert.Equal(levels.LongLength, record.LevelSizes.Sum(s => (long)s));
+                    BntxSharp.BntxFile native = BntxSharp.BntxFile.Load(zs.Decompress(File.ReadAllBytes(romfs + "/Tex/" + entry.Name + ".bntx.zs"), "x.zs"));
+                    Assert.Equal(native.Textures[0].GetDeswizzledData(0, 0), levels.AsSpan(0, (int)record.LevelSizes[0]).ToArray());
+                }
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
+    }
+
     // An archive prepared for some programs has the code of those programs and leaves the rest empty.
     [CorpusFact]
     public void ArchivesPreparedForSomeProgramsHaveOnlyThose()
