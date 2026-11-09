@@ -15,6 +15,12 @@
 - Control code and immediate constants are not used. Bindless texture handles come out as `fp_t_tcb_*` names; resolving them needs the reflection and the texture-buffer constant slot.
 - 5 fragment programs use an opcode the lowering rejects (`unsupported native opcode`).
 
+## Preparation
+
+- Switch 2 stages carry no per-stage reflection (the BNSH reflection offset is zero), so the reports' stage slot lists are empty; bindings come from the BFSHA program tables. Bindless textures leave the sampler lists empty too.
+- A GLSL post-pass that names the `fp_t_tcb_*` bindless handles, and sampler names from the BFSHA symbol table.
+- Resume at the variation level (programs sharing a variation decompile it once each).
+
 ## Later
 
 - `BfShaderSharp.Decompile`: SASS to GLSL, separate from the readers.

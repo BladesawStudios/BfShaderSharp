@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>BfShaderSharp.Preparation</RootNamespace>
+    <AssemblyName>BfShaderSharp.Preparation</AssemblyName>
+    <Version>0.1.0</Version>
+    <Description>Exports the programs of a BFSHA archive as GLSL and reflection files, for any game.</Description>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BfShaderSharp.Decompile\BfShaderSharp.Decompile.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BfShaderSharp.Tests" />
+  </ItemGroup>
+
+</Project>
