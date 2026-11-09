@@ -21,6 +21,11 @@ public sealed class AssetContext(PackWriter pack, RomfsFiles romfs, ShaderArchiv
 
     public ConcurrentDictionary<string, byte> UsedTextures { get; } = new(StringComparer.Ordinal);
 
+    // The record blob of each texture imported so far, so a name the game unified into another texture can be given the same record.
+    public ConcurrentDictionary<string, BlobKey> TextureRecords { get; } = new(StringComparer.Ordinal);
+
+    public UnifyTex Unify { get; set; } = UnifyTex.Empty;
+
     public TextureStorage Storage { get; } = storage;
 
     public int LinearLevel { get; } = linearLevel;

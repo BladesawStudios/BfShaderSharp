@@ -21,6 +21,7 @@ public static class AssetPreparer
         AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel);
         foreach ((string name, BlobKey source) in shaders.Sources) pack.AddEntry(PackEntryKind.ShaderSource, name, source);
         ParallelOptions parallel = new() { MaxDegreeOfParallelism = options.Parallelism > 0 ? options.Parallelism : Environment.ProcessorCount };
+        context.Unify = UnifyTex.Load(romfs);
         ModelFileImporter models = new(context);
         IReadOnlyList<string> files = romfs.ModelFiles(options.ModelPatterns);
         Parallel.ForEach(files, parallel, models.Import);
@@ -33,15 +34,33 @@ public static class AssetPreparer
     private static (int Textures, List<string> Missing) ImportTextures(AssetContext context, AssetOptions options, ParallelOptions parallel)
     {
         List<string> missing = [];
+        // A name with no file of its own that the unify table maps to another texture is stored as another entry for that texture.
+        List<(string Name, string Target)> aliases = [];
         IReadOnlyList<string> paths = options.Textures switch
         {
             TextureSelection.All => context.Romfs.TextureFiles(),
             TextureSelection.None => [],
-            _ => [.. context.UsedTextures.Keys.Order(StringComparer.Ordinal).Select(name => context.Romfs.TextureFile(name) ?? Missing(missing, name)).OfType<string>().Distinct()],
+            _ => [.. context.UsedTextures.Keys.Order(StringComparer.Ordinal).Select(name => Locate(context, name, aliases) ?? Missing(missing, name)).OfType<string>().Distinct()],
         };
         int textures = 0;
         Parallel.ForEach(paths, parallel, path => Interlocked.Add(ref textures, TextureImporter.Import(context, path)));
+        foreach ((string name, string target) in aliases)
+        {
+            if (context.TextureRecords.TryGetValue(target, out BlobKey record)) context.Pack.AddEntry(PackEntryKind.Texture, name, record);
+            else missing.Add(name);
+        }
+
+        missing.Sort(StringComparer.Ordinal);
         return (textures, missing);
+    }
+
+    private static string? Locate(AssetContext context, string name, List<(string, string)> aliases)
+    {
+        if (context.Romfs.TextureFile(name) is { } own) return own;
+        if (context.Unify.TargetOf(name) is not { } target) return null;
+        string? file = context.Romfs.TextureFile(target);
+        if (file is not null) aliases.Add((name, target));
+        return file;
     }
 
     private static string? Missing(List<string> missing, string name)

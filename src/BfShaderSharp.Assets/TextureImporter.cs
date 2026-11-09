@@ -28,7 +28,9 @@ public static class TextureImporter
             TextureRecord record = context.Storage == TextureStorage.Native ? Native(native, i, texture) : LinearTexture.Store(context, i, texture);
             RecordWriter writer = new();
             record.Write(writer);
-            context.Pack.AddEntry(PackEntryKind.Texture, texture.Name, context.Pack.Add(writer.ToArray(), BlobCodec.Raw));
+            BlobKey key = context.Pack.Add(writer.ToArray(), BlobCodec.Raw);
+            context.TextureRecords[texture.Name] = key;
+            context.Pack.AddEntry(PackEntryKind.Texture, texture.Name, key);
         }
 
         return textures.Textures.Count;
