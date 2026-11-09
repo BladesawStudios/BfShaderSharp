@@ -6,13 +6,16 @@ namespace BfShaderSharp.Prepared;
 /// <summary>Collects the blobs of a prepared file, compressing each once and storing identical contents once.</summary>
 /// <remarks>
 /// <see cref="Add"/> is safe to call from many threads: the compression runs outside the lock, and two threads adding
-/// the same contents at once keep one copy. A blob's index is its place in insertion order. Compression is Brotli at
+/// the same contents at once keep one copy. A blob's number is its place in insertion order; the writer stores blobs in content order and renumbers references. Compression is Brotli at
 /// the quality given to the constructor.
 /// </remarks>
 public sealed class BlobPool(int quality = 9)
 {
+    public const int None = PreparedLayout.NoBlob;
+
     private readonly Dictionary<string, int> _index = [];
     private readonly List<(byte[] Compressed, int RawSize)> _blobs = [];
+    private readonly List<string> _keys = [];
     private readonly object _gate = new();
 
     public int Count
@@ -36,8 +39,23 @@ public sealed class BlobPool(int quality = 9)
         {
             if (_index.TryGetValue(key, out int existing)) return existing;
             _blobs.Add((compressed, raw.Length));
+            _keys.Add(key);
             return _index[key] = _blobs.Count - 1;
         }
+    }
+
+    // The blob numbers in the order the file stores them: sorted by content hash, so a file does not depend on the order threads added blobs.
+    // Entry i of the result is the file position of the blob added as number i.
+    internal int[] CanonicalOrder(out int[] sorted)
+    {
+        lock (_gate)
+        {
+            sorted = [.. Enumerable.Range(0, _blobs.Count).OrderBy(i => _keys[i], StringComparer.Ordinal)];
+        }
+
+        int[] position = new int[sorted.Length];
+        for (int rank = 0; rank < sorted.Length; rank++) position[sorted[rank]] = rank;
+        return position;
     }
 
     internal (byte[] Compressed, int RawSize) this[int index]

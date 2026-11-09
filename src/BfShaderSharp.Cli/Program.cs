@@ -1,39 +1,68 @@
+using System.Diagnostics;
 using BfShaderSharp.Bfsha;
+using BfShaderSharp.Bnsh;
 using BfShaderSharp.Preparation;
+using BfShaderSharp.Prepared;
 using ZsDicSharp;
 
-// bfshader export <file.bfsha[.zs]> <outDir> [--model <name>] [--every <n>]
 // bfshader list <file.bfsha[.zs]>
-if (args.Length < 2 || args[0] is not ("export" or "list"))
+// bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]
+// bfshader show <file.bfsp> [<model> <program> <stage>]
+const string Usage = "usage: bfshader list <file.bfsha[.zs]>\n       bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]\n       bfshader show <file.bfsp> [<model> <program> <stage>]";
+if (args.Length < 2) return Fail(Usage);
+switch (args[0])
 {
-    Console.Error.WriteLine("usage: bfshader export <file.bfsha[.zs]> <outDir> [--model <name>] [--every <n>]\n       bfshader list <file.bfsha[.zs]>");
-    return 1;
+    case "list":
+        foreach (ShaderModel model in BfshaFile.Read(Load(args[1])).Models())
+            Console.WriteLine($"{model.Name}: {model.ProgramCount} programs, {model.StaticOptions.Count + model.DynamicOptions.Count} options, {model.Samplers.Count} samplers");
+        return 0;
+    case "prepare" when args.Length >= 3:
+        return Prepare();
+    case "show":
+        return Show();
+    default:
+        return Fail(Usage);
 }
 
-BfshaFile archive = BfshaFile.Read(Load(args[1]));
-if (args[0] == "list")
+int Prepare()
 {
-    foreach (ShaderModel model in archive.Models())
-        Console.WriteLine($"{model.Name}: {model.ProgramCount} programs, {model.StaticOptions.Count + model.DynamicOptions.Count} options, {model.Samplers.Count} samplers");
+    int quality = int.TryParse(Option("--quality"), out int q) ? q : 9;
+    int threads = int.TryParse(Option("--threads"), out int t) ? t : 0;
+    BfshaFile archive = BfshaFile.Read(Load(args[1]));
+    Stopwatch clock = Stopwatch.StartNew();
+    using FileStream output = File.Create(args[2]);
+    PreparationResult result = ArchivePreparer.Prepare(archive, output, quality, threads, new Progress<string>(name => Console.WriteLine($"model {name}")));
+    Console.WriteLine($"{result.Models} models, {result.Programs} programs, {result.Stages} stages ({result.Decompiled} distinct), {result.Failures.Count} failed, {output.Length / 1048576.0:F1} MB in {clock.Elapsed.TotalSeconds:F1} s");
+    foreach (StageFailure failure in result.Failures.Take(10)) Console.WriteLine($"  {failure.Model} variation {failure.Variation} {failure.Stage}: {failure.Reason}");
     return 0;
 }
 
-if (args.Length < 3) return 1;
-string? only = Option("--model");
-int every = int.TryParse(Option("--every"), out int n) && n > 1 ? n : 1;
-ModelExporter exporter = new(new DirectorySink(args[2]));
-foreach (ShaderModel model in archive.Models().Where(m => only is null || m.Name == only))
+int Show()
 {
-    int count = exporter.Export(model, program => program % every == 0);
-    Console.WriteLine($"{model.Name}: exported {count} of {model.ProgramCount} programs");
-}
+    PreparedArchive archive = PreparedArchive.Read(File.ReadAllBytes(args[1]));
+    if (args.Length < 5)
+    {
+        foreach (PreparedModel model in archive.Models())
+            Console.WriteLine($"{model.Name}: {model.ProgramCount} programs, {model.VariationCount} variations, {model.SamplerCount} samplers, {model.BlockCount} blocks");
+        return 0;
+    }
 
-return 0;
+    PreparedModel? found = archive.Model(args[2]);
+    if (found is null || !int.TryParse(args[3], out int program) || !Enum.TryParse(args[4], true, out ShaderStage stage)) return Fail(Usage);
+    Console.WriteLine(found.Glsl(program, stage) ?? "(no such stage)");
+    return 0;
+}
 
 string? Option(string name)
 {
     int at = Array.IndexOf(args, name);
     return at >= 0 && at + 1 < args.Length ? args[at + 1] : null;
+}
+
+static int Fail(string message)
+{
+    Console.Error.WriteLine(message);
+    return 1;
 }
 
 // A compressed file is opened with the dictionaries of the nearest ancestor romfs that has them.

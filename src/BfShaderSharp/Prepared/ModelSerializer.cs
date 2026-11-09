@@ -7,9 +7,9 @@ namespace BfShaderSharp.Prepared;
 /// <summary>Appends the tables of one model to the table buffer and returns the position of its model record.</summary>
 /// <remarks>
 /// Each table is written before the model record that points at it, so no offset is patched afterwards. Tables start on
-/// 8-byte boundaries. Strings are interned in the shared pool.
+/// 8-byte boundaries. Blob references are renumbered to the file order of the blobs. Strings are interned in the shared pool.
 /// </remarks>
-internal sealed class ModelSerializer(ByteSink sink, StringPool strings)
+internal sealed class ModelSerializer(ByteSink sink, StringPool strings, int[] blobPosition)
 {
     internal List<long> ModelOffsets { get; } = [];
 
@@ -35,6 +35,13 @@ internal sealed class ModelSerializer(ByteSink sink, StringPool strings)
         sink.U32((uint)model.Attributes.Count);
         sink.U32((uint)model.Blocks.Count);
         foreach (long offset in new[] { options, keyRows, variations, programTable, bindings, samplers, attributes, blocks }) sink.U64((ulong)offset);
+    }
+
+    private int Blob(int number)
+    {
+        if (number == PreparedLayout.NoBlob) return number;
+        if ((uint)number >= (uint)blobPosition.Length) throw new BfShaderFormatException($"Blob {number} is not in the pool");
+        return blobPosition[number];
     }
 
     private long Table(ReadOnlySpan<byte> bytes)
@@ -82,7 +89,7 @@ internal sealed class ModelSerializer(ByteSink sink, StringPool strings)
         foreach (int[] stages in variations)
         {
             if (stages.Length != PreparedLayout.StageCount) throw new BfShaderFormatException("A variation must name one blob for each of the six stages");
-            foreach (int blob in stages) sink.I32(blob);
+            foreach (int blob in stages) sink.I32(Blob(blob));
         }
 
         return at;
@@ -171,7 +178,7 @@ internal sealed class ModelSerializer(ByteSink sink, StringPool strings)
             sink.U32((uint)block.ByteSize);
             sink.U32((uint)block.Uniforms.Count);
             sink.U64((ulong)uniforms[i]);
-            sink.I32(block.DefaultBuffer);
+            sink.I32(Blob(block.DefaultBuffer));
             sink.U32(0);
         }
 

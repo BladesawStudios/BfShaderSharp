@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Runtime.InteropServices;
 using BfShaderSharp.Errors;
 
@@ -8,11 +9,13 @@ namespace BfShaderSharp.Decompile;
 /// Calls the native lowering of the Fritchii emulator through <c>bfs_ampere_lower</c>, a DLL built by
 /// tools/AmpereLowerOracle and found next to the application or at the path in BFS_AMPERE_LOWER. The output has no
 /// scheduling words. A program the lowering rejects raises <see cref="BfShaderUnsupportedException"/> with its reason.
+/// The output buffer starts at the size of the source and doubles when the lowered program is larger.
 /// </remarks>
 public static unsafe class AmpereLowering
 {
     public const string LibraryName = "bfs_ampere_lower";
     public const string PathVariable = "BFS_AMPERE_LOWER";
+    private const int BufferTooSmall = 2;
 
     static AmpereLowering()
     {
@@ -43,16 +46,34 @@ public static unsafe class AmpereLowering
 
     public static ulong[] Lower(ReadOnlySpan<byte> code, bool geometry, int tessellation)
     {
-        ulong[] output = new ulong[code.Length * 4 + 1024];
         byte[] error = new byte[256];
-        uint count, errorOffset;
+        for (int capacity = Math.Max(1024, code.Length / 16 * 8); ; capacity *= 2)
+        {
+            ulong[] output = ArrayPool<ulong>.Shared.Rent(capacity);
+            try
+            {
+                int status = Run(code, geometry, tessellation, output, error, out int count, out uint errorOffset);
+                if (status == 0) return output.AsSpan(0, count).ToArray();
+                if (status != BufferTooSmall)
+                    throw new BfShaderUnsupportedException($"Ampere lowering rejected the program: {System.Text.Encoding.ASCII.GetString(error).TrimEnd('\0')}", errorOffset);
+            }
+            finally
+            {
+                ArrayPool<ulong>.Shared.Return(output);
+            }
+        }
+    }
+
+    private static int Run(ReadOnlySpan<byte> code, bool geometry, int tessellation, ulong[] output, byte[] error, out int count, out uint errorOffset)
+    {
+        uint written, failedAt;
         int status;
         fixed (byte* c = code)
         fixed (ulong* o = output)
         fixed (byte* e = error)
-            status = Lower(c, (uint)code.Length, geometry ? 1 : 0, 1, tessellation, 0, o, (uint)output.Length, &count, &errorOffset, e, (uint)error.Length);
-        if (status == 0) return output[..(int)count];
-        string reason = status == 2 ? "lowered program is larger than the output buffer" : System.Text.Encoding.ASCII.GetString(error).TrimEnd('\0');
-        throw new BfShaderUnsupportedException($"Ampere lowering rejected the program: {reason}", errorOffset);
+            status = Lower(c, (uint)code.Length, geometry ? 1 : 0, 1, tessellation, 0, o, (uint)output.Length, &written, &failedAt, e, (uint)error.Length);
+        count = (int)written;
+        errorOffset = failedAt;
+        return status;
     }
 }

@@ -55,15 +55,19 @@ public readonly struct ShaderModel
     }
 
     // One row of 32-bit key words for each program: the static words, then the dynamic words.
-    internal ReadOnlyMemory<byte> KeyTable =>
-        _view.Bytes((long)_view.U64(_at + 0x90), (long)ProgramCount * (StaticKeyLength + DynamicKeyLength) * 4);
+    public ReadOnlyMemory<byte> KeyRows => _view.Bytes((long)_view.U64(_at + 0x90), (long)ProgramCount * RowWords * 4);
 
-    public ProgramLookup CreateLookup()
+    public int RowWords => StaticKeyLength + DynamicKeyLength;
+
+    public ProgramLookup CreateLookup() => new(Options(), KeyRows, RowWords, ProgramCount);
+
+    // The options as the lookup sees them: a static option keys the word at its index, a dynamic option's word follows the static words, less its key offset.
+    public IReadOnlyList<LookupOption> Options()
     {
         List<LookupOption> options = [];
         AddOptions(options, StaticOptions, isStatic: true);
         AddOptions(options, DynamicOptions, isStatic: false);
-        return new ProgramLookup(options, KeyTable, StaticKeyLength + DynamicKeyLength, ProgramCount);
+        return options;
     }
 
     public BnshFile Bnsh
@@ -76,7 +80,6 @@ public readonly struct ShaderModel
         }
     }
 
-    // A static option keys the word at its index; a dynamic option's word follows the static words, less its key offset.
     private void AddOptions(List<LookupOption> options, NamedTable<ShaderOption> table, bool isStatic)
     {
         for (int i = 0; i < table.Count; i++)

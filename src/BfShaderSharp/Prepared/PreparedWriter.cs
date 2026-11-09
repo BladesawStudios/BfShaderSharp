@@ -16,7 +16,8 @@ public static class PreparedWriter
         ByteSink sink = new();
         sink.Bytes(new byte[PreparedLayout.HeaderSize]);
         StringPool strings = new();
-        ModelSerializer serializer = new(sink, strings);
+        int[] position = blobs.CanonicalOrder(out int[] stored);
+        ModelSerializer serializer = new(sink, strings, position);
         foreach (PreparedModelData model in models) serializer.Write(model);
         sink.Align(8);
         long modelTable = sink.Length;
@@ -33,7 +34,7 @@ public static class PreparedWriter
         long offset = dataStart;
         for (int i = 0; i < blobCount; i++)
         {
-            var (compressed, rawSize) = blobs[i];
+            var (compressed, rawSize) = blobs[stored[i]];
             sink.U64((ulong)offset);
             sink.U32((uint)compressed.Length);
             sink.U32((uint)rawSize);
@@ -46,7 +47,7 @@ public static class PreparedWriter
         byte[] padding = new byte[8];
         for (int i = 0; i < blobCount; i++)
         {
-            byte[] compressed = blobs[i].Compressed;
+            byte[] compressed = blobs[stored[i]].Compressed;
             output.Write(compressed);
             output.Write(padding, 0, (8 - compressed.Length % 8) % 8);
         }
