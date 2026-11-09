@@ -7,6 +7,7 @@
     <Description>Reader for Nintendo BFSHA shader archives and BNSH shader binaries on Switch and Switch 2.</Description>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 

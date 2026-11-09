@@ -11,7 +11,7 @@ namespace BfShaderSharp.Preparation;
 /// </remarks>
 public static class ArchivePreparer
 {
-    public static PreparationResult Prepare(BfshaFile archive, Stream output, int compressionQuality = 9, int parallelism = 0, IProgress<string>? progress = null)
+    public static PreparationResult Prepare(BfshaFile archive, Stream output, int compressionQuality = 5, int parallelism = 0, IProgress<string>? progress = null)
     {
         BlobPool blobs = new(compressionQuality);
         StageCompiler stages = new(blobs);

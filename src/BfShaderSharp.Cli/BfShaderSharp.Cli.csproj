@@ -5,6 +5,8 @@
     <RootNamespace>BfShaderSharp.Cli</RootNamespace>
     <AssemblyName>bfshader</AssemblyName>
     <IsPackable>false</IsPackable>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>

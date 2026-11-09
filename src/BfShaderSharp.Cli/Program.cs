@@ -26,7 +26,7 @@ switch (args[0])
 
 int Prepare()
 {
-    int quality = int.TryParse(Option("--quality"), out int q) ? q : 9;
+    int quality = int.TryParse(Option("--quality"), out int q) ? q : 5;
     int threads = int.TryParse(Option("--threads"), out int t) ? t : 0;
     BfshaFile archive = BfshaFile.Read(Load(args[1]));
     Stopwatch clock = Stopwatch.StartNew();

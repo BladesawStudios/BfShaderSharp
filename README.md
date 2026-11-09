@@ -19,7 +19,7 @@ one prepared file for any game), `BfShaderSharp.Cli` (`bfshader list|prepare|sho
 `bfshader prepare Model.bfsha.zs out.bfsp` decompiles every program once (identical stages are translated once) and writes a
 single `BFSP` file: fixed-size tables, a deduplicated string pool, and Brotli-compressed GLSL and default-buffer blobs stored in
 content-hash order, so the output is byte-identical whatever the thread count. `PreparedArchive.Read` reads it in place, and
-`PreparedModel.CreateLookup` finds a program from option choices without loading any GLSL. `bfshader show` inspects one.
+`PreparedModel.CreateLookup` finds a program from option choices without loading any GLSL. `bfshader show` inspects one. Open it with `PreparedArchive.Open(path)`, which memory-maps the file so only the programs you read are loaded. Preparing is allocation-heavy: the CLI runs with server GC (7x faster on the OOT Model archive, 29 s), and a host that calls `ArchivePreparer` should set `<ServerGarbageCollection>true</ServerGarbageCollection>` too.
 
 ## Build
 

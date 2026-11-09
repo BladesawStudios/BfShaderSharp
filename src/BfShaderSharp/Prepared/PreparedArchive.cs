@@ -11,15 +11,17 @@ namespace BfShaderSharp.Prepared;
 /// for. A blob is decompressed on request, and the file bytes are never copied, so a memory-mapped file costs only the
 /// pages that are touched.
 /// </remarks>
-public sealed class PreparedArchive
+public sealed class PreparedArchive : IDisposable
 {
+    private readonly MappedFile? _mapping;
     private readonly ByteView _view;
     private readonly long _modelTable;
     private readonly long _stringTable;
     private readonly long _blobTable;
 
-    private PreparedArchive(ByteView view)
+    private PreparedArchive(ByteView view, MappedFile? mapping = null)
     {
+        _mapping = mapping;
         _view = view;
         ModelCount = view.Count(8);
         _modelTable = Position(view, 0x10, (long)ModelCount * 8);
@@ -39,12 +41,33 @@ public sealed class PreparedArchive
 
     public static PreparedArchive Read(ReadOnlyMemory<byte> bytes)
     {
-        ByteView view = new(bytes);
+        return new PreparedArchive(Check(new ByteView(bytes)));
+    }
+
+    private static ByteView Check(ByteView view)
+    {
         if (view.Length < PreparedLayout.HeaderSize || view.U32(0) != PreparedLayout.Magic) throw new BfShaderFormatException("Not a prepared shader file", 0);
         if (view.U32(4) != PreparedLayout.Version) throw new BfShaderUnsupportedException($"Prepared file version {view.U32(4)} is not supported", 4);
         if (view.U64(0x30) != (ulong)view.Length) throw new BfShaderFormatException("Prepared file size does not match its header", 0x30);
-        return new PreparedArchive(view);
+        return view;
     }
+
+    // Maps the file instead of reading it, so opening costs nothing and only the programs that are used are loaded from disk.
+    public static PreparedArchive Open(string path)
+    {
+        MappedFile mapping = MappedFile.Open(path);
+        try
+        {
+            return new PreparedArchive(Check(new ByteView(mapping.Memory)), mapping);
+        }
+        catch
+        {
+            ((IDisposable)mapping).Dispose();
+            throw;
+        }
+    }
+
+    public void Dispose() => (_mapping as IDisposable)?.Dispose();
 
     public PreparedModel Model(int index)
     {

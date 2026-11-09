@@ -93,4 +93,20 @@ public class PreparedRoundTripTests
         Assert.Throws<BfShaderFormatException>(() => archive.Blob(99));
         Assert.Throws<BfShaderFormatException>(() => archive.String(99));
     }
+
+    [Fact]
+    public void OpensAFileByMappingItAndReadsTheSameGlsl()
+    {
+        string path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllBytes(path, Build().File);
+            using PreparedArchive archive = PreparedArchive.Open(path);
+            Assert.Equal("void main() { /* vertex */ }", archive.Model("model")!.Glsl(0, ShaderStage.Vertex));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
 }

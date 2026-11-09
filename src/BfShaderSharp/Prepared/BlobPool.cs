@@ -9,7 +9,7 @@ namespace BfShaderSharp.Prepared;
 /// the same contents at once keep one copy. A blob's number is its place in insertion order; the writer stores blobs in content order and renumbers references. Compression is Brotli at
 /// the quality given to the constructor.
 /// </remarks>
-public sealed class BlobPool(int quality = 9)
+public sealed class BlobPool(int quality = 5)
 {
     public const int None = PreparedLayout.NoBlob;
 
