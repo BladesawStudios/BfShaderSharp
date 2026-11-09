@@ -12,8 +12,8 @@ using ZsDicSharp;
 // bfshader list <file.bfsha[.zs]>
 // bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]
 // bfshader show <file.bfsp> [<model> <program> <stage>]
-// bfshader select <file.bfsp> <model.bfres[.zs]> [<material>]
-const string Usage = "usage: bfshader list <file.bfsha[.zs]>\n       bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]\n       bfshader show <file.bfsp> [<model> <program> <stage>]\n       bfshader select <file.bfsp> <model.bfres[.zs]> [<material>]";
+// bfshader select <file.bfsp> <model.bfres[.zs]> [<material>] [--option <name>=<choice>]...
+const string Usage = "usage: bfshader list <file.bfsha[.zs]>\n       bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]\n       bfshader show <file.bfsp> [<model> <program> <stage>]\n       bfshader select <file.bfsp> <model.bfres[.zs]> [<material>] [--option <name>=<choice>]...";
 if (args.Length < 2) return Fail(Usage);
 switch (args[0])
 {
@@ -60,16 +60,24 @@ int Show()
     return 0;
 }
 
-// Prints the program each material of a model file runs, picked from the options the material assigns.
+// Prints the program each material of a model file runs, picked from the options the material assigns. The names of hashed
+// option keys come from the Shader/ExternalBinaryString file of the nearest ancestor romfs, and each --option name=value is a draw-time choice.
 int Select()
 {
     using PreparedArchive archive = PreparedArchive.Open(args[1]);
-    MaterialShaderSelector selector = MaterialShaderSelector.For(archive);
+    MaterialShaderSelector selector = MaterialShaderSelector.For(archive, ExternalNames(args[2]));
+    string? only = args.Length > 3 && !args[3].StartsWith("--") ? args[3] : null;
+    Dictionary<string, string> drawTime = [];
+    for (int at = 0; at + 1 < args.Length; at++)
+    {
+        if (args[at] == "--option" && args[at + 1].Split('=', 2) is [var name, var choice]) drawTime[name] = choice;
+    }
+
     foreach (ResModel model in BfresFile.Read(Load(args[2])).Models.Values)
-    foreach (Material material in model.Materials.Values.Where(m => args.Length < 4 || m.Name == args[3]))
+    foreach (Material material in model.Materials.Values.Where(m => only is null || m.Name == only))
     {
         ShaderAssign assign = material.ShaderAssign;
-        int program = selector.Select(assign);
+        int program = selector.Select(material, drawTime);
         Console.WriteLine($"{model.Name}/{material.Name}: {assign.ShaderArchiveName}/{assign.ShadingModelName} program {(program < 0 ? "none" : program)}");
     }
 
@@ -86,6 +94,18 @@ static int Fail(string message)
 {
     Console.Error.WriteLine(message);
     return 1;
+}
+
+static Dictionary<ulong, string> ExternalNames(string path)
+{
+    for (DirectoryInfo? dir = new(Path.GetDirectoryName(Path.GetFullPath(path))!); dir is not null; dir = dir.Parent)
+    {
+        string shaders = Path.Combine(dir.FullName, "Shader");
+        string? table = Directory.Exists(shaders) ? Directory.EnumerateFiles(shaders, "ExternalBinaryString.bfres*").FirstOrDefault() : null;
+        if (table is not null) return BfresFile.Read(Load(table)).NamesByHash();
+    }
+
+    return [];
 }
 
 // A compressed file is opened with the dictionaries of the nearest ancestor romfs that has them.
