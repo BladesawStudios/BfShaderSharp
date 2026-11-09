@@ -18,11 +18,13 @@ public static class MaterialImporter
     {
         ShaderAssign assign = material.ShaderAssign;
         List<SamplerRecord> samplers = Samplers(context, material);
+        int program = context.Shaders.Select(material);
+        context.Programs.Add(assign.ShaderArchiveName, assign.ShadingModelName, program);
         RecordWriter writer = new();
         new MaterialRecord(
             assign.ShaderArchiveName,
             assign.ShadingModelName,
-            context.Shaders.Select(material),
+            program,
             material.Flags,
             [.. MaterialShaderSelector.ChoicesOf(material, context.Names).OrderBy(c => c.Key, StringComparer.Ordinal).Select(c => new NamePair(c.Key, c.Value))],
             [.. material.RenderInfos.Select(i => RenderInfo(context, i))],

@@ -18,9 +18,10 @@ internal static class AssetsCommand
         AssetOptions options = new(args[1], patterns, textures, threads);
         string? shaders = Values(args, "--shaders").FirstOrDefault();
         Stopwatch clock = Stopwatch.StartNew();
-        Task<string>? shaderTask = shaders is null ? null : Task.Run(() => PrepareShaders(args[1], shaders, threads));
+        Task<string>? shaderTask = null;
         using FileStream output = File.Create(args[2]);
-        AssetResult result = AssetPreparer.Prepare(options, output);
+        // The shader archives are prepared for the programs the models use, once those are known, while the textures are read.
+        AssetResult result = AssetPreparer.Prepare(options, output, use => shaderTask = shaders is null ? null : Task.Run(() => PrepareShaders(args[1], shaders, threads, args.Contains("--all-programs") ? null : use)));
         TimeSpan assets = clock.Elapsed;
         Console.WriteLine($"{result.ModelFiles} model files ({result.Skipped} skipped, {result.Failures.Count} failed): {result.Models} models, {result.Materials} materials, {result.Textures} textures");
         Console.WriteLine($"{result.BlobsAdded} blobs offered, {result.BlobsStored} stored; {result.PackBytes / 1048576.0:F0} MB in {assets.TotalSeconds:F1} s");
@@ -53,7 +54,7 @@ internal static class AssetsCommand
     }
 
     // Prepares each BFSHA archive of the romfs's Shader folder, one after another, into a prepared file in the output folder.
-    private static string PrepareShaders(string romfs, string folder, int threads)
+    private static string PrepareShaders(string romfs, string folder, int threads, ProgramUse? use)
     {
         Directory.CreateDirectory(folder);
         Stopwatch clock = Stopwatch.StartNew();
@@ -63,7 +64,7 @@ internal static class AssetsCommand
         {
             BfshaFile archive = BfshaFile.Read(files.Read(path));
             using FileStream output = File.Create(Path.Combine(folder, archive.Name + ".bfsp"));
-            programs += ArchivePreparer.Prepare(archive, output, 5, threads).Programs;
+            programs += ArchivePreparer.Prepare(archive, output, 5, threads, null, use?.Of(archive.Name) ?? (use is null ? null : new Dictionary<string, IReadOnlySet<int>>())).Programs;
         }
 
         return $"{programs} shader programs in {clock.Elapsed.TotalSeconds:F1} s";

@@ -6,7 +6,7 @@ namespace BfShaderSharp.Assets;
 /// <summary>What every importer of one preparation shares: the pack being written, the romfs, the shader archives and the name table.</summary>
 /// <remarks>
 /// UsedTextures collects the names of the textures that imported materials sample, so the texture step can import only
-/// those. All members are safe to use from many threads.
+/// those, and Programs the shader programs they run. All members are safe to use from many threads.
 /// </remarks>
 public sealed class AssetContext(PackWriter pack, RomfsFiles romfs, ShaderArchiveSet shaders, IReadOnlyDictionary<ulong, string> names)
 {
@@ -19,4 +19,6 @@ public sealed class AssetContext(PackWriter pack, RomfsFiles romfs, ShaderArchiv
     public IReadOnlyDictionary<ulong, string> Names { get; } = names;
 
     public ConcurrentDictionary<string, byte> UsedTextures { get; } = new(StringComparer.Ordinal);
+
+    public ProgramUse Programs { get; } = new();
 }

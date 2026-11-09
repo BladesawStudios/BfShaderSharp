@@ -7,11 +7,12 @@ namespace BfShaderSharp.Assets;
 /// Model files are imported in parallel, each choosing its materials' shader programs from the shader archives as it
 /// goes, then the textures the materials sample (or all of them) are imported in parallel. Everything is stored by content
 /// hash into the pack as it is produced, so memory holds only the files in flight. Any number of model files may be
-/// selected, from one to all. The library writes nowhere but the stream it is given.
+/// selected, from one to all. modelsDone is called once every model is imported and before the textures are, with the
+/// programs the materials run, so the shader archives can be prepared for them while the textures are read. The library writes nowhere but the stream it is given.
 /// </remarks>
 public static class AssetPreparer
 {
-    public static AssetResult Prepare(AssetOptions options, Stream output)
+    public static AssetResult Prepare(AssetOptions options, Stream output, Action<ProgramUse>? modelsDone = null)
     {
         using RomfsFiles romfs = new(options.Romfs);
         Dictionary<ulong, string> names = romfs.ExternalNames();
@@ -23,6 +24,7 @@ public static class AssetPreparer
         ModelFileImporter models = new(context);
         IReadOnlyList<string> files = romfs.ModelFiles(options.ModelPatterns);
         Parallel.ForEach(files, parallel, models.Import);
+        modelsDone?.Invoke(context.Programs);
         (int textures, List<string> missing) = ImportTextures(context, options, parallel);
         pack.Finish();
         return new AssetResult(files.Count, models.Models, models.Materials, textures, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);

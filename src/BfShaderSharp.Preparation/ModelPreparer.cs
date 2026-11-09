@@ -8,7 +8,7 @@ namespace BfShaderSharp.Preparation;
 
 /// <summary>Turns one shading model of an archive into the data a prepared file stores for it.</summary>
 /// <remarks>
-/// Every variation that a program uses is decompiled, in parallel; variations no program uses stay empty. Samplers,
+/// Every variation that a wanted program uses (every program when none are named) is decompiled, in parallel; the other variations stay empty. Samplers,
 /// attributes, uniform blocks with their default buffers, option tables and key rows are copied from the archive, and
 /// each program's bindings are laid out one entry for each sampler and then one for each block. Failures are
 /// collected and never stop the model.
@@ -19,7 +19,7 @@ internal sealed class ModelPreparer(StageCompiler stages, BlobPool blobs, int pa
 
     internal int StageCount;
 
-    internal PreparedModelData Prepare(ShaderModel model)
+    internal PreparedModelData Prepare(ShaderModel model, IReadOnlySet<int>? wanted = null)
     {
         BnshFile bnsh = model.Bnsh;
         var programs = new List<PreparedProgramData>(model.ProgramCount);
@@ -28,7 +28,7 @@ internal sealed class ModelPreparer(StageCompiler stages, BlobPool blobs, int pa
         {
             ShaderProgram record = model.Program(i);
             if ((uint)record.VariationIndex >= (uint)used.Length) throw new BfShaderFormatException($"Program {i} names variation {record.VariationIndex} of {used.Length}");
-            used[record.VariationIndex] = true;
+            if (wanted is null || wanted.Contains(i)) used[record.VariationIndex] = true;
             programs.Add(new PreparedProgramData(record.VariationIndex, Bindings(model, record)));
         }
 
