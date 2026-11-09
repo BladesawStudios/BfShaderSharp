@@ -3,6 +3,7 @@ using BfresSharp;
 using BfresSharp.Model;
 using BfresSharp.Model.Material;
 using BfShaderSharp.Bfsha;
+using BfShaderSharp.Cli;
 using BfShaderSharp.Materials;
 using BfShaderSharp.Bnsh;
 using BfShaderSharp.Preparation;
@@ -12,6 +13,8 @@ using ZsDicSharp;
 // bfshader list <file.bfsha[.zs]>
 // bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]
 // bfshader show <file.bfsp> [<model> <program> <stage>]
+// bfshader assets <romfs> <out.bfap> [--model <pattern>]... [--all-textures|--no-textures] [--shaders <folder>] [--threads <n>]
+// bfshader inspect <file.bfap> [<model>]
 // bfshader select <file.bfsp> <model.bfres[.zs]> [<material>] [--option <name>=<choice>]...
 const string Usage = "usage: bfshader list <file.bfsha[.zs]>\n       bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]\n       bfshader show <file.bfsp> [<model> <program> <stage>]\n       bfshader select <file.bfsp> <model.bfres[.zs]> [<material>] [--option <name>=<choice>]...";
 if (args.Length < 2) return Fail(Usage);
@@ -27,6 +30,10 @@ switch (args[0])
         return Show();
     case "select" when args.Length >= 3:
         return Select();
+    case "assets" when args.Length >= 3:
+        return AssetsCommand.Run(args);
+    case "inspect":
+        return AssetsCommand.Inspect(args);
     default:
         return Fail(Usage);
 }
