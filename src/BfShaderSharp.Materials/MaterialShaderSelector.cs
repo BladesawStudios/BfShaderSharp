@@ -11,7 +11,7 @@ namespace BfShaderSharp.Materials;
 /// Options the material leaves at <see cref="ShaderAssign.DefaultValue"/> are not named, so they take the shader's
 /// default choice. The lookup of each shading model is built on first use and kept, so selecting for many materials
 /// costs one hash each. Safe to call from many threads. <see cref="Select(Material)"/> returns -1 when the archive
-/// has no such shading model or no program has the assigned choices. Switch 2 files key a material's options by the
+/// has no such shading model or a choice does not exist; when no program was compiled with every choice, the nearest one is returned. Switch 2 files key a material's options by the
 /// hash of the option name; the names come from the game's external string table (the <c>ExternalBinaryString</c>
 /// file of its Shader folder), given as the hash-to-name map of that file's strings. A key that is neither a name nor
 /// a hash the table knows is left out. A boolean option's True and False are the shader's choices 1 and 0. The render state, alpha test function and pass options come from the material's render infos.
@@ -34,10 +34,25 @@ public sealed class MaterialShaderSelector
     public static MaterialShaderSelector For(PreparedArchive archive, IReadOnlyDictionary<ulong, string>? names = null) =>
         new(name => archive.Model(name)?.CreateLookup(), names);
 
-    public int Select(Material material)
+    public int Select(Material material) => Select(material, null);
+
+    /// <summary>
+    /// Selects with the renderer's draw-time options, which win over the material's own: the skin weight count, probe and wetness
+    /// options. When no program has every choice, the one that keeps the most important ones is returned: the draw-time options first,
+    /// then the material's own, then its <c>o_</c> options, which a renderer overrides anyway.
+    /// </summary>
+    public int Select(Material material, IReadOnlyDictionary<string, string>? drawTime)
     {
         ProgramLookup? lookup = _lookups.GetOrAdd(material.ShaderAssign.ShadingModelName, _create);
-        return lookup is null ? -1 : lookup.Find(ChoicesOf(material, _names));
+        if (lookup is null) return -1;
+        Dictionary<string, string> choices = ChoicesOf(material, _names);
+        if (drawTime is not null)
+        {
+            foreach (var (name, choice) in drawTime) choices[name] = choice;
+        }
+
+        int program = lookup.Find(choices);
+        return program >= 0 ? program : lookup.FindNearest(choices, name => drawTime?.ContainsKey(name) == true ? 1000 : name.StartsWith("o_", StringComparison.Ordinal) ? 1 : 16);
     }
 
     internal static Dictionary<string, string> ChoicesOf(Material material, IReadOnlyDictionary<ulong, string> names)

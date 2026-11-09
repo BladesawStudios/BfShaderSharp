@@ -66,6 +66,51 @@ public sealed class ProgramLookup
         return _rows.TryGetValue(new RowKey(bytes), out int exact) ? exact : ClosestMatching(named);
     }
 
+    /// <summary>
+    /// The program that keeps the most important of the named choices when no program has all of them: the one whose matching
+    /// choices weigh most, then whose other options differ least from the defaults. Returns -1 only when a choice does not exist.
+    /// </summary>
+    public int FindNearest(IReadOnlyDictionary<string, string> choices, Func<string, int> weightOf)
+    {
+        List<(int Option, int Choice, int Weight)> named = [];
+        foreach (var (name, value) in choices)
+        {
+            if (!_optionByName.TryGetValue(name, out int at)) continue;
+            if (!_choiceByName[at].TryGetValue(value, out int choice)) return -1;
+            named.Add((at, choice, weightOf(name)));
+        }
+
+        int best = -1, bestWeight = -1, bestDistance = int.MaxValue;
+        for (int program = 0; program < _programCount; program++)
+        {
+            ReadOnlySpan<byte> row = Row(program);
+            int weight = 0;
+            foreach (var (option, choice, w) in named)
+            {
+                if (_options[option].ChoiceOf(BinaryPrimitives.ReadUInt32LittleEndian(row[(_options[option].Word * 4)..])) == choice) weight += w;
+            }
+
+            if (weight < bestWeight) continue;
+            int distance = DistanceFromDefaults(row, named.Select(n => n.Option));
+            if (weight == bestWeight && distance >= bestDistance) continue;
+            best = program;
+            bestWeight = weight;
+            bestDistance = distance;
+        }
+
+        return best;
+    }
+
+    private int DistanceFromDefaults(ReadOnlySpan<byte> row, IEnumerable<int> namedOptions)
+    {
+        uint[] free = new uint[_defaultRow.Length];
+        Array.Fill(free, uint.MaxValue);
+        foreach (int option in namedOptions) free[_options[option].Word] &= ~_options[option].Mask;
+        int distance = 0;
+        for (int word = 0; word < free.Length; word++) distance += BitOperations.PopCount((BinaryPrimitives.ReadUInt32LittleEndian(row[(word * 4)..]) ^ _defaultRow[word]) & free[word]);
+        return distance;
+    }
+
     public Dictionary<string, string> ChoicesOf(int program)
     {
         if ((uint)program >= (uint)_programCount) throw new ArgumentOutOfRangeException(nameof(program));
@@ -83,21 +128,12 @@ public sealed class ProgramLookup
     // Among the programs that have every named choice, the one whose unnamed options differ least from the defaults; the first of equals.
     private int ClosestMatching(List<(int Option, int Choice)> named)
     {
-        uint[] free = new uint[_defaultRow.Length];
-        Array.Fill(free, uint.MaxValue);
-        foreach (var (option, _) in named) free[_options[option].Word] &= ~_options[option].Mask;
-
         int best = -1, bestDistance = int.MaxValue;
         for (int program = 0; program < _programCount; program++)
         {
             ReadOnlySpan<byte> row = Row(program);
             if (!HasAll(row, named)) continue;
-            int distance = 0;
-            for (int word = 0; word < free.Length; word++)
-            {
-                distance += BitOperations.PopCount((BinaryPrimitives.ReadUInt32LittleEndian(row[(word * 4)..]) ^ _defaultRow[word]) & free[word]);
-            }
-
+            int distance = DistanceFromDefaults(row, named.Select(n => n.Option));
             if (distance >= bestDistance) continue;
             best = program;
             bestDistance = distance;

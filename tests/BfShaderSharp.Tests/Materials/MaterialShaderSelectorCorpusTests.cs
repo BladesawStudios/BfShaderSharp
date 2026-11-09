@@ -100,9 +100,11 @@ public class MaterialShaderSelectorCorpusTests(ITestOutputHelper output)
                 }
 
                 bool clean = true;
+                Dictionary<string, string> assigned = MaterialShaderSelector.ChoicesOf(assign, names);
                 foreach (var (name, choice) in MaterialShaderSelector.ChoicesOf(material, names))
                 {
-                    if (!options.TryGetValue(name, out LookupOption? option)) Problem($"{model}: unknown option {name}");
+                    // A render state option derived from the render infos is simply absent from a model that does not use it (a scene material).
+                    if (!options.TryGetValue(name, out LookupOption? option)) { if (!assigned.ContainsKey(name)) continue; Problem($"{model}: unknown option {name}"); }
                     else if (!option.Choices.Contains(choice)) Problem($"{model}: option {name} has no choice {choice} (has {string.Join(",", option.Choices.Take(6))})");
                     else continue;
                     clean = false;
@@ -123,8 +125,8 @@ public class MaterialShaderSelectorCorpusTests(ITestOutputHelper output)
     private void Report((int Files, int Skipped, int Materials, int Found, Dictionary<string, int> Problems) result)
     {
         output.WriteLine($"{result.Files} model files ({result.Skipped} unsupported), {result.Materials} materials, {result.Found} resolved every option and found a program");
-        foreach (var problem in result.Problems.OrderByDescending(p => p.Value).Take(15)) output.WriteLine($"  {problem.Value}x {problem.Key}");
-        // A few materials name a combination the game never compiled (cliff and rock materials of unused models), so the bar is not every material.
-        Assert.True(result.Found >= result.Materials * 0.998, $"{result.Materials - result.Found} of {result.Materials} materials did not resolve");
+        foreach (var problem in result.Problems.OrderBy(p => p.Key.Contains("nearest")).ThenByDescending(p => p.Value).Take(15)) output.WriteLine($"  {problem.Value}x {problem.Key}");
+        // Every material gets a program; a few name a combination the game never compiled and get the nearest one (listed as "nearest program").
+        Assert.True(result.Found == result.Materials, $"{result.Materials - result.Found} of {result.Materials} materials did not resolve");
     }
 }

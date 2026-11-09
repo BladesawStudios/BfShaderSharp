@@ -41,6 +41,25 @@ public class MaterialShaderSelectorTests
     }
 
     [Fact]
+    public void DrawTimeChoicesWinOverTheMaterial()
+    {
+        MaterialShaderSelector selector = Selector();
+        Material material = new() { ShaderAssign = Assign("model", ("shadows", "on"), ("quality", "mid")) };
+        Assert.Equal(1, selector.Select(material));
+        Assert.Equal(2, selector.Select(material, new Dictionary<string, string> { ["quality"] = "high" }));
+    }
+
+    [Fact]
+    public void AMissingCombinationGetsTheNearestProgramKeepingDrawTimeChoices()
+    {
+        // No program has shadows off with quality high.
+        MaterialShaderSelector selector = Selector();
+        Material material = new() { ShaderAssign = Assign("model", ("shadows", "off"), ("quality", "high")) };
+        Assert.Equal(0, selector.Select(material));
+        Assert.Equal(2, selector.Select(material, new Dictionary<string, string> { ["quality"] = "high" }));
+    }
+
+    [Fact]
     public void DefaultValuesTakeTheShadersDefaultChoice()
     {
         Assert.Equal(1, Pick(Selector(), Assign("model", ("shadows", "on"), ("quality", ShaderAssign.DefaultValue))));
