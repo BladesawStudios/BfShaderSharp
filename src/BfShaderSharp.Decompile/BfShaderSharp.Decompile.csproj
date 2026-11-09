@@ -6,7 +6,6 @@
     <Version>0.1.0</Version>
     <Description>Turns Switch 2 (Ampere) shader stage code from BNSH files into GLSL.</Description>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 

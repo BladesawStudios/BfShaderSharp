@@ -9,8 +9,7 @@
 
 ## Switch 2 decompiler
 
-- `BfShaderSharp.Decompile` lowers Ampere to Maxwell through a native DLL (`tools/AmpereLowerOracle`, built from the header-only Fritchii lowering; set `BFS_AMPERE_LOWER`), then translates with the prebuilt Ryujinx DLLs in `lib/ryujinx`. Corpus result: 48,580 of 48,585 OOT stages lower, and a 1-in-10 sample translates all but the lowering rejects. The full corpus takes about 8 minutes (`BFSHA_VARIATION_STRIDE=10` for a 1-minute sample).
-- Port the lowering (`lower_to_maxwell.h`, `register_pressure.h`, `geometry_exit.h`, about 4.5k lines) to C#, checked word for word against the native DLL on the corpus, to drop the native dependency. The Fritchii code is GPL-3.0-or-later with Mesa NAK (MIT) encoding references; keep the notices.
+- `BfShaderSharp.Decompile` lowers Ampere to Maxwell in managed code (`Ampere/`, a port of the Fritchii lowering) and translates with the prebuilt Ryujinx DLLs in `lib/ryujinx`. The managed lowering matches the native one word for word on all 11,734 distinct OOT stage programs, rejecting the same ones for the same reasons (`AmpereParityTests`, with `BFS_AMPERE_LOWER` and `BFSHA_CORPUS`); 48,580 of 48,585 stages lower. `tools/AmpereLowerOracle` builds the native reference for that test only.
 - Replace the prebuilt Ryujinx binaries with a source build.
 - Control code and immediate constants are not used. Bindless texture handles come out as `fp_t_tcb_*` names; resolving them needs the reflection and the texture-buffer constant slot.
 - 5 fragment programs use an opcode the lowering rejects (`unsupported native opcode`).

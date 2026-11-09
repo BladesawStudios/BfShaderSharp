@@ -12,7 +12,7 @@ public class DecompileCorpusTests(ITestOutputHelper output)
 {
     private static int VariationStride => int.TryParse(Environment.GetEnvironmentVariable("BFSHA_VARIATION_STRIDE"), out int n) && n > 1 ? n : 1;
 
-    private static bool Skip => !NativeAmpereLowering.IsAvailable || GameFiles.Folders.Count == 0;
+    private static bool Skip => GameFiles.Folders.Count == 0;
 
     [Fact]
     public void EveryStageLowersAndTranslates()

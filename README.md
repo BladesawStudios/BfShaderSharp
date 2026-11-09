@@ -11,8 +11,8 @@ string glsl = ShaderDecompiler.ToGlsl(fragment);   // BfShaderSharp.Decompile
 ```
 
 Projects: `BfShaderSharp` (readers), `BfShaderSharp.Decompile` (stage code to GLSL), `BfShaderSharp.Preparation` (turn an archive into
-one prepared file for any game), `BfShaderSharp.Cli` (`bfshader list|prepare|show`). The decompiler needs the native lowering DLL from
-`tools/AmpereLowerOracle` (set `BFS_AMPERE_LOWER`) and runs on Windows.
+one prepared file for any game), `BfShaderSharp.Cli` (`bfshader list|prepare|show`). The decompiler lowers Ampere to Maxwell in managed code, so it runs on any platform .NET does; the prebuilt
+Ryujinx translator DLLs in `lib/ryujinx` are the remaining platform-neutral dependency. The native lowering in `tools/AmpereLowerOracle` is only the reference the tests compare against (`BFS_AMPERE_LOWER`).
 
 ## Prepared files
 
@@ -30,3 +30,7 @@ dotnet test BfShaderSharp.sln
 
 Set `BFSHA_CORPUS` to one or more game `Shader` directories (separated by `;`) to run the corpus tests. Code conventions are in
 [docs/guidelines.md](docs/guidelines.md).
+
+## Licensing notes
+
+`BfShaderSharp.Decompile/Ampere` is a C# port of the Ampere-to-Maxwell lowering of the Eden emulator (GPL-3.0-or-later) as carried in the Fritchii fork, using the Mesa NAK instruction encoding tables (MIT) as its reference. Both notices apply to that code.
