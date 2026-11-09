@@ -44,10 +44,14 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
 
         public int Index { get; }
 
+        private readonly int _hash = NodeHash.Next();
+
+        public override int GetHashCode() => _hash;
+
         private Operation(Operand[] sources)
         {
             // The array may be modified externally, so we store a copy.
-            _sources = (Operand[])sources.Clone();
+            _sources = sources.AsSpan().ToArray();
 
             for (int index = 0; index < _sources.Length; index++)
             {
@@ -68,7 +72,7 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
             if (dests != null)
             {
                 // The array may be modified externally, so we store a copy.
-                _dests = (Operand[])dests.Clone();
+                _dests = dests.AsSpan().ToArray();
 
                 for (int dstIndex = 0; dstIndex < dests.Length; dstIndex++)
                 {

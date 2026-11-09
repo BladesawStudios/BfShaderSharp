@@ -17,6 +17,10 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
 
         private readonly HashSet<BasicBlock> _blocks;
 
+        private readonly int _hash = NodeHash.Next();
+
+        public override int GetHashCode() => _hash;
+
         private class PhiSource
         {
             public BasicBlock Block { get; }

@@ -4,6 +4,10 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
 {
     class BasicBlock
     {
+        private readonly int _hash = NodeHash.Next();
+
+        public override int GetHashCode() => _hash;
+
         public int Index { get; set; }
 
         public LinkedList<INode> Operations { get; }

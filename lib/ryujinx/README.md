@@ -9,4 +9,8 @@ out of the repository's warnings-as-errors rules. Improvements to the translator
 
 ## Changes from upstream
 
-None to the translator source yet. The CLI runs it without tiered compilation (about 20% faster on a full prepare).
+The CLI runs the translator without tiered compilation (about 20% faster on a full prepare). Output is byte-identical to upstream for every change below.
+
+- `NodeHash`: IR and AST nodes (`Operand`, `Operation`, `PhiNode`, `BasicBlock`, `AstNode`) carry a per-thread counter as their hash code instead of the slow default object hash. Collections keyed on them enumerate in insertion order, so nothing depends on the value.
+- `Operand.UseOps` is created on first use, since only local variables have uses.
+- `Operation` copies its operand arrays with a span instead of `Array.Clone`.

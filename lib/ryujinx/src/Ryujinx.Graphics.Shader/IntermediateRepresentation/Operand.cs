@@ -16,11 +16,17 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
 
         public INode AsgOp { get; set; }
 
-        public HashSet<INode> UseOps { get; }
+        private HashSet<INode> _useOps;
+
+        // Only local variables are ever used as sources, so the set is created on first use.
+        public HashSet<INode> UseOps => _useOps ??= [];
+
+        private readonly int _hash = NodeHash.Next();
+
+        public override int GetHashCode() => _hash;
 
         private Operand()
         {
-            UseOps = [];
         }
 
         public Operand(OperandType type) : this()
