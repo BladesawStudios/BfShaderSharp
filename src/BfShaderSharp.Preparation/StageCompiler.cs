@@ -33,7 +33,7 @@ internal sealed class StageCompiler(BlobPool blobs)
         Interlocked.Increment(ref _decompiled);
         try
         {
-            return (blobs.Add(Encoding.UTF8.GetBytes(ShaderDecompiler.ToGlsl(code))), null);
+            return (blobs.Add(Encoding.UTF8.GetBytes(ShaderDecompiler.ToGlsl(code, debug: true))), null);
         }
         catch (BfShaderFormatException ex)
         {
