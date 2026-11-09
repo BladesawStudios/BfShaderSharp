@@ -66,6 +66,15 @@ public readonly struct ByteView(ReadOnlyMemory<byte> data)
         return Read(offset + 2, length);
     }
 
+    // The UTF-8 string that starts at the offset and ends at the first zero byte.
+    public string CString(long offset)
+    {
+        ReadOnlySpan<byte> rest = Slice(offset, Length - offset).Span;
+        int end = rest.IndexOf((byte)0);
+        if (end < 0) throw new BfShaderFormatException("String is not terminated", offset);
+        return Encoding.UTF8.GetString(rest[..end]);
+    }
+
     public string String(long offset) => offset == 0 ? "" : Encoding.UTF8.GetString(StringBytes(offset));
 
     public bool StartsWith(long offset, ReadOnlySpan<byte> expected) =>

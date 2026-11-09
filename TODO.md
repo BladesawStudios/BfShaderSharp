@@ -27,9 +27,9 @@
 - Compressed cubic curves decode with `CurveDecoder` to a value and a slope per key (a cubic Hermite spline), and the 0.2% flagged as plain keys are rotation curves of a unit quaternion a key (`DecodeRotation`, shortest-arc interpolation; the component order x, y, z, w is assumed from the bone's rotation, not checked). Linear, step and baked compressed curves do not occur in the OOT animation files and are not decoded. The decoded values agree with the differences between keys (median correlation 0.98), but nothing has played them against the game yet.
 - Material animations are stored by material and parameter name, with each uniform's block offset in the material's `UniformLayoutRecord`; a runtime that plays one joins the two by name.
 - `ShaderSource` entries record which archive a program number came from; a reader does not yet check them against a `.bfsp`.
+- SHARC files (`SharcbFile`, the AGL programs of `ApplicationPackage`) are read, and their stages go to the decompiler through `SharcVariation.ToStageCode()`. They are not yet prepared into a `.bfsp` or the CLI. Stage kinds 4 and 5 are unnamed (probably task and mesh), the option combination order (first option most significant) is the old ShaderLibrary's and is not checked against a draw, and a stage's code size is the program size at 0x38 of its control block.
 
 ## Later
 
 - `BfShaderSharp.Decompile`: SASS to GLSL, separate from the readers.
-- SHARCFB (AGL) archives.
 - Writers, if a use turns up.

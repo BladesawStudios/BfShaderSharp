@@ -29,6 +29,16 @@ internal static class GameFiles
         }
     }
 
+    internal static IEnumerable<byte[]> ApplicationPackages(string folder)
+    {
+        using ZsDic? zs = FindRomfs(folder) is { } romfs ? ZsDic.FromRomfs(romfs) : null;
+        foreach (string path in Directory.EnumerateFiles(folder, "ApplicationPackage*.sarc*"))
+        {
+            byte[] data = File.ReadAllBytes(path);
+            yield return ZsDic.IsCompressed(data) ? zs?.Decompress(data, path) ?? data : data;
+        }
+    }
+
     private static string? FindRomfs(string folder)
     {
         for (DirectoryInfo? dir = new(folder); dir is not null; dir = dir.Parent)

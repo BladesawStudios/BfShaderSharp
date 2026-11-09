@@ -14,6 +14,10 @@ Projects: `BfShaderSharp` (readers), `BfShaderSharp.Decompile` (stage code to GL
 one prepared file for any game), `BfShaderSharp.Materials` (pick the program a BFRES material runs, over BfresSharp), `BfShaderSharp.Assets` (prepare a romfs's models, materials and textures into one asset pack), `BfShaderSharp.Cli` (`bfshader list|prepare|show|select|assets|inspect`). The decompiler lowers Ampere to Maxwell in managed code, so it runs on any platform .NET does; the prebuilt
 Ryujinx translator DLLs in `lib/ryujinx` are the remaining platform-neutral dependency. The native lowering in `tools/AmpereLowerOracle` is only the reference the tests compare against (`BFS_AMPERE_LOWER`).
 
+## SHARC files
+
+`SharcbFile.Read` opens a compiled SHARC file (the AGL resolve, sky and post programs, found in `ApplicationPackage` and read with SarcSharp). `Programs` lists each program with its options, and `Variation(program, index, stage).ToStageCode()` gives code for `ShaderDecompiler`.
+
 ## Prepared files
 
 `bfshader prepare Model.bfsha.zs out.bfsp` decompiles every program once (identical stages are translated once) and writes a
