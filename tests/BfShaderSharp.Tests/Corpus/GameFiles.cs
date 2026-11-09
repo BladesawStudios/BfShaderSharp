@@ -17,11 +17,11 @@ internal static class GameFiles
     internal static IReadOnlyList<string> Folders =>
         (Environment.GetEnvironmentVariable(Env) ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries).Where(Directory.Exists).ToList();
 
-    internal static IEnumerable<(string Name, byte[] Data)> BfshaFiles(string folder)
+    internal static IEnumerable<(string Name, byte[] Data)> BfshaFiles(string folder, int? stride = null)
     {
         using ZsDic? zs = FindRomfs(folder) is { } romfs ? ZsDic.FromRomfs(romfs) : null;
-        int stride = Stride;
-        foreach (string path in Directory.EnumerateFiles(folder, "*.bfsha*", SearchOption.AllDirectories).Where((_, index) => index % stride == 0))
+        int step = stride ?? Stride;
+        foreach (string path in Directory.EnumerateFiles(folder, "*.bfsha*", SearchOption.AllDirectories).Where((_, index) => index % step == 0))
         {
             byte[] data = File.ReadAllBytes(path);
             if (ZsDic.IsCompressed(data)) data = zs?.Decompress(data, path) ?? data;

@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Numerics;
 using BfShaderSharp.Errors;
 
 namespace BfShaderSharp.Lookup;
@@ -6,8 +7,8 @@ namespace BfShaderSharp.Lookup;
 /// <summary>Finds the program of a shading model that was compiled for a set of option choices.</summary>
 /// <remarks>
 /// Built once per model by hashing the key row of every program, so an exact lookup is one hash. Options that are
-/// not named take their default choice. When no program has exactly that row, the first program whose choices match
-/// every named option is returned, which is how a material that names only some options is resolved. An option name
+/// not named take their default choice. When no program has exactly that row, the program whose choices match
+/// every named option and whose other options differ least from their defaults is returned, which is how a material that names only some options is resolved. An option name
 /// the model does not have is ignored; a choice the option does not have finds nothing. Rows are slices of the
 /// source bytes and are never copied.
 /// </remarks>
@@ -62,7 +63,7 @@ public sealed class ProgramLookup
 
         byte[] bytes = new byte[_rowBytes];
         for (int i = 0; i < row.Length; i++) BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(i * 4), row[i]);
-        return _rows.TryGetValue(new RowKey(bytes), out int exact) ? exact : FirstMatching(named);
+        return _rows.TryGetValue(new RowKey(bytes), out int exact) ? exact : ClosestMatching(named);
     }
 
     public Dictionary<string, string> ChoicesOf(int program)
@@ -79,23 +80,40 @@ public sealed class ProgramLookup
         return choices;
     }
 
-    private int FirstMatching(List<(int Option, int Choice)> named)
+    // Among the programs that have every named choice, the one whose unnamed options differ least from the defaults; the first of equals.
+    private int ClosestMatching(List<(int Option, int Choice)> named)
     {
+        uint[] free = new uint[_defaultRow.Length];
+        Array.Fill(free, uint.MaxValue);
+        foreach (var (option, _) in named) free[_options[option].Word] &= ~_options[option].Mask;
+
+        int best = -1, bestDistance = int.MaxValue;
         for (int program = 0; program < _programCount; program++)
         {
             ReadOnlySpan<byte> row = Row(program);
-            bool all = true;
-            foreach (var (option, choice) in named)
+            if (!HasAll(row, named)) continue;
+            int distance = 0;
+            for (int word = 0; word < free.Length; word++)
             {
-                if (_options[option].ChoiceOf(BinaryPrimitives.ReadUInt32LittleEndian(row[(_options[option].Word * 4)..])) == choice) continue;
-                all = false;
-                break;
+                distance += BitOperations.PopCount((BinaryPrimitives.ReadUInt32LittleEndian(row[(word * 4)..]) ^ _defaultRow[word]) & free[word]);
             }
 
-            if (all) return program;
+            if (distance >= bestDistance) continue;
+            best = program;
+            bestDistance = distance;
         }
 
-        return -1;
+        return best;
+    }
+
+    private bool HasAll(ReadOnlySpan<byte> row, List<(int Option, int Choice)> named)
+    {
+        foreach (var (option, choice) in named)
+        {
+            if (_options[option].ChoiceOf(BinaryPrimitives.ReadUInt32LittleEndian(row[(_options[option].Word * 4)..])) != choice) return false;
+        }
+
+        return true;
     }
 
     private ReadOnlySpan<byte> Row(int program) => _keys.Span.Slice(program * _rowBytes, _rowBytes);

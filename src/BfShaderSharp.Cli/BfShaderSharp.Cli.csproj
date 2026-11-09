@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BfShaderSharp.Preparation\BfShaderSharp.Preparation.csproj" />
+    <ProjectReference Include="..\BfShaderSharp.Materials\BfShaderSharp.Materials.csproj" />
     <ProjectReference Include="..\..\lib\vendor\ZsDicSharp\src\ZsDicSharp\ZsDicSharp.csproj" />
   </ItemGroup>
 

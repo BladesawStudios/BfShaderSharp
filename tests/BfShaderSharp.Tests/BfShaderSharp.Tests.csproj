@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\BfShaderSharp\BfShaderSharp.csproj" />
     <ProjectReference Include="..\..\src\BfShaderSharp.Decompile\BfShaderSharp.Decompile.csproj" />
     <ProjectReference Include="..\..\src\BfShaderSharp.Preparation\BfShaderSharp.Preparation.csproj" />
+    <ProjectReference Include="..\..\src\BfShaderSharp.Materials\BfShaderSharp.Materials.csproj" />
     <ProjectReference Include="..\..\lib\vendor\ZsDicSharp\src\ZsDicSharp\ZsDicSharp.csproj" />
   </ItemGroup>
 

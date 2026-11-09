@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>BfShaderSharp.Materials</RootNamespace>
+    <AssemblyName>BfShaderSharp.Materials</AssemblyName>
+    <Version>0.1.0</Version>
+    <Description>Picks the shader program a BFRES material runs from the options it assigns.</Description>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BfShaderSharp\BfShaderSharp.csproj" />
+    <ProjectReference Include="..\..\lib\vendor\BfresSharp\src\BfresSharp\BfresSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BfShaderSharp.Tests" />
+  </ItemGroup>
+
+</Project>

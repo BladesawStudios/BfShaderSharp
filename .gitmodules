@@ -1,3 +1,9 @@
 [submodule "lib/vendor/ZsDicSharp"]
 	path = lib/vendor/ZsDicSharp
 	url = https://github.com/BladesawStudios/ZsDicSharp
+[submodule "lib/vendor/BfresSharp"]
+	path = lib/vendor/BfresSharp
+	url = https://github.com/BladesawStudios/BfresSharp
+[submodule "lib/vendor/ZstdSharp"]
+	path = lib/vendor/ZstdSharp
+	url = https://github.com/BladesawStudios/ZstdSharp

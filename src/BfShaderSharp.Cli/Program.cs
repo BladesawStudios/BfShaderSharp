@@ -1,5 +1,9 @@
 using System.Diagnostics;
+using BfresSharp;
+using BfresSharp.Model;
+using BfresSharp.Model.Material;
 using BfShaderSharp.Bfsha;
+using BfShaderSharp.Materials;
 using BfShaderSharp.Bnsh;
 using BfShaderSharp.Preparation;
 using BfShaderSharp.Prepared;
@@ -8,7 +12,8 @@ using ZsDicSharp;
 // bfshader list <file.bfsha[.zs]>
 // bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]
 // bfshader show <file.bfsp> [<model> <program> <stage>]
-const string Usage = "usage: bfshader list <file.bfsha[.zs]>\n       bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]\n       bfshader show <file.bfsp> [<model> <program> <stage>]";
+// bfshader select <file.bfsp> <model.bfres[.zs]> [<material>]
+const string Usage = "usage: bfshader list <file.bfsha[.zs]>\n       bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]\n       bfshader show <file.bfsp> [<model> <program> <stage>]\n       bfshader select <file.bfsp> <model.bfres[.zs]> [<material>]";
 if (args.Length < 2) return Fail(Usage);
 switch (args[0])
 {
@@ -20,6 +25,8 @@ switch (args[0])
         return Prepare();
     case "show":
         return Show();
+    case "select" when args.Length >= 3:
+        return Select();
     default:
         return Fail(Usage);
 }
@@ -50,6 +57,22 @@ int Show()
     PreparedModel? found = archive.Model(args[2]);
     if (found is null || !int.TryParse(args[3], out int program) || !Enum.TryParse(args[4], true, out ShaderStage stage)) return Fail(Usage);
     Console.WriteLine(found.Glsl(program, stage) ?? "(no such stage)");
+    return 0;
+}
+
+// Prints the program each material of a model file runs, picked from the options the material assigns.
+int Select()
+{
+    using PreparedArchive archive = PreparedArchive.Open(args[1]);
+    MaterialShaderSelector selector = MaterialShaderSelector.For(archive);
+    foreach (ResModel model in BfresFile.Read(Load(args[2])).Models.Values)
+    foreach (Material material in model.Materials.Values.Where(m => args.Length < 4 || m.Name == args[3]))
+    {
+        ShaderAssign assign = material.ShaderAssign;
+        int program = selector.Select(assign);
+        Console.WriteLine($"{model.Name}/{material.Name}: {assign.ShaderArchiveName}/{assign.ShadingModelName} program {(program < 0 ? "none" : program)}");
+    }
+
     return 0;
 }
 
