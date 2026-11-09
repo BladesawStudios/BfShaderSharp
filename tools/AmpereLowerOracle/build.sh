@@ -3,4 +3,4 @@
 set -e
 SRC="$1"; OUT="$2"
 mkdir -p "$OUT"
-g++ -std=c++20 -O2 -shared -static -o "$OUT/bfs_oracle.dll" -I"$SRC" "$(dirname "$0")/oracle.cpp"
+g++ -std=c++20 -O2 -shared -static -o "$OUT/bfs_ampere_lower.dll" -I"$SRC" "$(dirname "$0")/oracle.cpp"

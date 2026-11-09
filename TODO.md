@@ -7,10 +7,13 @@
 - `ResDict.IndexOf` is a linear scan; walk the patricia tree if lookups show up in profiles.
 - Corpus survey: add a time budget and the BotW/TOTK corpora.
 
-## Switch 2
+## Switch 2 decompiler
 
-- The OOT bench shaders (`Nin_Ounce_NVN2`, BFSHA 9, BNSH 2.4.1, GRSC api 4) are not Maxwell. A stage's byte code is a 0x80-byte header followed by 128-bit instructions (`0x7802` MOV, `0x794d` EXIT, `0x7918` NOP), which is the Turing/Ampere SASS encoding, not the 64-bit Maxwell encoding with scheduling words that Ryujinx translates (its code slices a 0x30 header). Ryujinx cannot decompile these. The decompiler project needs an Ampere SASS decoder (Mesa's NAK is the public reference for the SM70+ encoding).
-- Control code is still present (`0x...` words such as `34127698 c9000000`); work out whether it locates immediate constants as it does on Switch 1.
+- `BfShaderSharp.Decompile` lowers Ampere to Maxwell through a native DLL (`tools/AmpereLowerOracle`, built from the header-only Fritchii lowering; set `BFS_AMPERE_LOWER`), then translates with the prebuilt Ryujinx DLLs in `lib/ryujinx`. Corpus result: 48,580 of 48,585 OOT stages lower, and a 1-in-10 sample translates all but the lowering rejects. The full corpus takes about 8 minutes (`BFSHA_VARIATION_STRIDE=10` for a 1-minute sample).
+- Port the lowering (`lower_to_maxwell.h`, `register_pressure.h`, `geometry_exit.h`, about 4.5k lines) to C#, checked word for word against the native DLL on the corpus, to drop the native dependency. The Fritchii code is GPL-3.0-or-later with Mesa NAK (MIT) encoding references; keep the notices.
+- Replace the prebuilt Ryujinx binaries with a source build.
+- Control code and immediate constants are not used. Bindless texture handles come out as `fp_t_tcb_*` names; resolving them needs the reflection and the texture-buffer constant slot.
+- 5 fragment programs use an opcode the lowering rejects (`unsupported native opcode`).
 
 ## Later
 

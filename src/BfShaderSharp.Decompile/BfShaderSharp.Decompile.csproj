@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>BfShaderSharp.Decompile</RootNamespace>
+    <AssemblyName>BfShaderSharp.Decompile</AssemblyName>
+    <Version>0.1.0</Version>
+    <Description>Turns Switch 2 (Ampere) shader stage code from BNSH files into GLSL.</Description>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BfShaderSharp\BfShaderSharp.csproj" />
+    <Reference Include="Ryujinx.Graphics.Shader"><HintPath>..\..\lib\ryujinx\Ryujinx.Graphics.Shader.dll</HintPath></Reference>
+    <Reference Include="Ryujinx.Common"><HintPath>..\..\lib\ryujinx\Ryujinx.Common.dll</HintPath></Reference>
+    <Reference Include="Spv.Generator"><HintPath>..\..\lib\ryujinx\Spv.Generator.dll</HintPath></Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BfShaderSharp.Tests" />
+  </ItemGroup>
+
+</Project>
