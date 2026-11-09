@@ -16,4 +16,7 @@ internal static class HashedNames
         if (key.Length != 18 || !key.StartsWith("0x", StringComparison.Ordinal) || !ulong.TryParse(key.AsSpan(2), NumberStyles.HexNumber, null, out ulong hash)) return key;
         return names.GetValueOrDefault(hash);
     }
+
+    /// <summary>The name a key stands for, or the key itself when it is a hash the table does not know.</summary>
+    public static string NameOrKey(string key, IReadOnlyDictionary<ulong, string> names) => Resolve(key, names) ?? key;
 }

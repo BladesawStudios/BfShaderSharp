@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>BfShaderSharp.Assets</RootNamespace>
+    <AssemblyName>BfShaderSharp.Assets</AssemblyName>
+    <Version>0.1.0</Version>
+    <Description>Prepares the models, materials and textures of a game's romfs into one deduplicated asset pack.</Description>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BfShaderSharp.Materials\BfShaderSharp.Materials.csproj" />
+    <ProjectReference Include="..\..\lib\vendor\ZsDicSharp\src\ZsDicSharp\ZsDicSharp.csproj" />
+    <ProjectReference Include="..\..\lib\vendor\BfresSharp\lib\vendor\BntxSharp\src\BntxSharp\BntxSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BfShaderSharp.Tests" />
+  </ItemGroup>
+
+</Project>

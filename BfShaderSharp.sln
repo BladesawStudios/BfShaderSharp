@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BfresSharp", "lib\vendor\Bf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McSharp", "lib\vendor\BfresSharp\lib\vendor\McSharp\src\McSharp\McSharp.csproj", "{AFA12F13-6C38-4760-B57A-59643825E538}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BfShaderSharp.Assets", "src\BfShaderSharp.Assets\BfShaderSharp.Assets.csproj", "{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -151,6 +153,18 @@ Global
 		{AFA12F13-6C38-4760-B57A-59643825E538}.Release|x64.Build.0 = Release|Any CPU
 		{AFA12F13-6C38-4760-B57A-59643825E538}.Release|x86.ActiveCfg = Release|Any CPU
 		{AFA12F13-6C38-4760-B57A-59643825E538}.Release|x86.Build.0 = Release|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Debug|x64.Build.0 = Debug|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Debug|x86.Build.0 = Debug|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Release|Any CPU.Build.0 = Release|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Release|x64.ActiveCfg = Release|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Release|x64.Build.0 = Release|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Release|x86.ActiveCfg = Release|Any CPU
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -168,5 +182,6 @@ Global
 		{5CE69F44-475F-454A-872D-B79BB8367A36} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{C28F2C9B-4C04-4404-9CA6-F5B3AE4D562A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{AFA12F13-6C38-4760-B57A-59643825E538} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{032F2627-FB0C-4BC9-9FA0-31A12FC7E620} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

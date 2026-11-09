@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="BfShaderSharp.Tests" />
+    <InternalsVisibleTo Include="BfShaderSharp.Assets" />
   </ItemGroup>
 
 </Project>
