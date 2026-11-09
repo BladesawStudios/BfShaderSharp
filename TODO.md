@@ -20,6 +20,13 @@
 - A GLSL post-pass that names the `fp_t_tcb_*` bindless handles, and sampler names from the BFSHA symbol table.
 - Resume an interrupted prepare; stream blobs to disk instead of holding them all in memory.
 
+## Asset packs
+
+- Material uniform blocks are not built at prepare time: a material record keeps its parameter names, types, offsets and value bytes, and the renderer lays them out with the program's block reflection.
+- An optional tier that stores textures deswizzled and recompressed, for the fastest GL upload, at the cost of prepare time and size.
+- Switch 2 model packages (`.bfres.mc`, MCPK) are skipped; so are animations.
+- `ShaderSource` entries record which archive a program number came from; a reader does not yet check them against a `.bfsp`.
+
 ## Later
 
 - `BfShaderSharp.Decompile`: SASS to GLSL, separate from the readers.
