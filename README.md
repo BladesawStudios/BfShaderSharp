@@ -11,7 +11,7 @@ string glsl = ShaderDecompiler.ToGlsl(fragment);   // BfShaderSharp.Decompile
 ```
 
 Projects: `BfShaderSharp` (readers), `BfShaderSharp.Decompile` (stage code to GLSL), `BfShaderSharp.Preparation` (turn an archive into
-one prepared file for any game), `BfShaderSharp.Cli` (`bfshader list|prepare|show`). The decompiler lowers Ampere to Maxwell in managed code, so it runs on any platform .NET does; the prebuilt
+one prepared file for any game), `BfShaderSharp.Materials` (pick the program a BFRES material runs, over BfresSharp), `BfShaderSharp.Cli` (`bfshader list|prepare|show|select`). The decompiler lowers Ampere to Maxwell in managed code, so it runs on any platform .NET does; the prebuilt
 Ryujinx translator DLLs in `lib/ryujinx` are the remaining platform-neutral dependency. The native lowering in `tools/AmpereLowerOracle` is only the reference the tests compare against (`BFS_AMPERE_LOWER`).
 
 ## Prepared files
@@ -20,6 +20,10 @@ Ryujinx translator DLLs in `lib/ryujinx` are the remaining platform-neutral depe
 single `BFSP` file: fixed-size tables, a deduplicated string pool, and Brotli-compressed GLSL and default-buffer blobs stored in
 content-hash order, so the output is byte-identical whatever the thread count. `PreparedArchive.Read` reads it in place, and
 `PreparedModel.CreateLookup` finds a program from option choices without loading any GLSL. `bfshader show` inspects one. Open it with `PreparedArchive.Open(path)`, which memory-maps the file so only the programs you read are loaded. Preparing is allocation-heavy: the CLI runs with server GC (7x faster on the OOT Model archive, 29 s), and a host that calls `ArchivePreparer` should set `<ServerGarbageCollection>true</ServerGarbageCollection>` too.
+
+## Choosing a program for a material
+
+`MaterialShaderSelector.For(archive, names).Select(material)` returns the program of a shading model that a BFRES material runs. The material's options pick the static choices (a Switch 2 file keys them by name hash; `names` is the hash map of the `ExternalBinaryString` file in the game's Shader folder), its render infos pick the render state, alpha test, display face and pass options, and options the material leaves alone take the shader's defaults. The program is the one with exactly those choices or, when the game never compiled that row, the closest one. On the OOT Model folder 99.9% of 21,515 materials resolve every option and get an exact program. The renderer's own draw-time options (skin weight count, probe and wetness options) are not the material's, so the nearest program is only a default for them. `bfshader select <file.bfsp> <model.bfres[.zs]> [<material>]` prints the program of each material.
 
 ## Build
 
