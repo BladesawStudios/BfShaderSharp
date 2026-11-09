@@ -16,6 +16,7 @@ public sealed class ModelFileImporter(AssetContext context)
     private int _models;
     private int _materials;
     private int _skipped;
+    private int _animations;
     private readonly List<(string File, string Reason)> _failures = [];
 
     public int Models => _models;
@@ -23,6 +24,8 @@ public sealed class ModelFileImporter(AssetContext context)
     public int Materials => _materials;
 
     public int Skipped => _skipped;
+
+    public int Animations => _animations;
 
     public IReadOnlyList<(string File, string Reason)> Failures
     {
@@ -45,6 +48,7 @@ public sealed class ModelFileImporter(AssetContext context)
 
             ResFile file = BfresFile.Read(bytes);
             string stem = RomfsFiles.StemOf(path);
+            Interlocked.Add(ref _animations, AnimationImporter.Import(context, stem, file));
             foreach (ResModel model in file.Models.Values)
             {
                 BlobKey key = ModelImporter.Import(context, model);

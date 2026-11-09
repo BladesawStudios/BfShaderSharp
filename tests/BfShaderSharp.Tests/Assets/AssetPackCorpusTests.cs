@@ -24,7 +24,7 @@ public class AssetPackCorpusTests(ITestOutputHelper output)
             if (!Directory.Exists(Path.Combine(romfs, "Model"))) continue;
             string path = Path.Combine(Path.GetTempPath(), $"corpus-{Guid.NewGuid():N}.bfap");
             AssetResult result;
-            using (FileStream stream = File.Create(path)) result = AssetPreparer.Prepare(new AssetOptions(romfs, ["Land_Deku*"]), stream);
+            using (FileStream stream = File.Create(path)) result = AssetPreparer.Prepare(new AssetOptions(romfs, ["Land_Deku*", "Animal_Cat*"]), stream);
             try
             {
                 output.WriteLine($"{result.Models} models, {result.Materials} materials, {result.Textures} textures, {result.BlobsAdded} blobs offered, {result.BlobsStored} stored, {result.PackBytes / 1048576.0:F1} MB");
@@ -36,11 +36,26 @@ public class AssetPackCorpusTests(ITestOutputHelper output)
                 foreach (PackEntry entry in pack.Of(PackEntryKind.Model)) Check(pack, entry, result.MissingTextures);
                 Assert.Contains(pack.Of(PackEntryKind.Model), e => pack.Model(e.Name)!.Materials.Any(m => pack.Material(m.Material).Block != default));
                 CheckTexture(pack, zs);
+                CheckAnimations(pack, result.Animations);
+                Assert.True(result.Animations > 0);
             }
             finally
             {
                 File.Delete(path);
             }
+        }
+    }
+
+    // Every animation the importer stored reads back, and a skeletal animation's curves keep their frames and keys.
+    private static void CheckAnimations(AssetPack pack, int stored)
+    {
+        PackEntryKind[] kinds = [PackEntryKind.SkeletalAnim, PackEntryKind.MaterialAnim, PackEntryKind.VisibilityAnim, PackEntryKind.ShapeAnim];
+        Assert.Equal(stored, kinds.Sum(kind => pack.Of(kind).Count()));
+        foreach (PackEntry entry in pack.Of(PackEntryKind.SkeletalAnim).Take(50))
+        {
+            SkeletalAnimRecord animation = pack.SkeletalAnim(entry.Name)!;
+            Assert.NotEmpty(animation.Bones);
+            foreach (CurveRecord curve in animation.Bones.SelectMany(b => b.Curves)) Assert.NotEmpty(curve.Frames);
         }
     }
 
@@ -102,7 +117,7 @@ public class AssetPackCorpusTests(ITestOutputHelper output)
             {
                 using AssetPack pack = AssetPack.Open(path);
                 using ZsDic zs = ZsDic.FromRomfs(romfs);
-                foreach (PackEntry entry in pack.Of(PackEntryKind.Texture).Take(20))
+                foreach (PackEntry entry in pack.Of(PackEntryKind.Texture).Where(e => File.Exists(romfs + "/Tex/" + e.Name + ".bntx.zs")).Take(20))
                 {
                     TextureRecord record = pack.Texture(entry.Name)!;
                     Assert.Equal(TextureStorage.Linear, record.Storage);

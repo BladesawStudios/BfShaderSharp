@@ -23,7 +23,7 @@ internal static class AssetsCommand
         // The shader archives are prepared for the programs the models use, once those are known, while the textures are read.
         AssetResult result = AssetPreparer.Prepare(options, output, use => shaderTask = shaders is null ? null : Task.Run(() => PrepareShaders(args[1], shaders, threads, args.Contains("--all-programs") ? null : use)));
         TimeSpan assets = clock.Elapsed;
-        Console.WriteLine($"{result.ModelFiles} model files ({result.Skipped} skipped, {result.Failures.Count} failed): {result.Models} models, {result.Materials} materials, {result.Textures} textures");
+        Console.WriteLine($"{result.ModelFiles} model files ({result.Skipped} skipped, {result.Failures.Count} failed): {result.Models} models, {result.Materials} materials, {result.Textures} textures, {result.Animations} animations");
         Console.WriteLine($"{result.BlobsAdded} blobs offered, {result.BlobsStored} stored; {result.PackBytes / 1048576.0:F0} MB in {assets.TotalSeconds:F1} s");
         foreach ((string file, string reason) in result.Failures.Take(10)) Console.WriteLine($"  {file}: {reason}");
         if (Values(args, "--missing").FirstOrDefault() is { } report) File.WriteAllLines(report, result.MissingTextures);

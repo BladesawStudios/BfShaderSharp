@@ -11,6 +11,7 @@ public sealed record AssetResult(
     int Models,
     int Materials,
     int Textures,
+    int Animations,
     int Skipped,
     long BlobsAdded,
     int BlobsStored,

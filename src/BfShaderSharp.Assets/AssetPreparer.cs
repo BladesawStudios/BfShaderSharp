@@ -28,7 +28,7 @@ public static class AssetPreparer
         modelsDone?.Invoke(context.Programs);
         (int textures, List<string> missing) = ImportTextures(context, options, parallel);
         pack.Finish();
-        return new AssetResult(files.Count, models.Models, models.Materials, textures, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);
+        return new AssetResult(files.Count, models.Models, models.Materials, textures, models.Animations, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);
     }
 
     private static (int Textures, List<string> Missing) ImportTextures(AssetContext context, AssetOptions options, ParallelOptions parallel)

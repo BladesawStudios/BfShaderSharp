@@ -23,7 +23,9 @@
 ## Asset packs
 
 - An optional tier that stores textures deswizzled and recompressed, for the fastest GL upload, at the cost of prepare time and size.
-- Switch 2 model packages (`.bfres.mc`, MCPK) are skipped; so are animations.
+- Switch 2 model packages (`.bfres.mc`, MCPK) are skipped for good: the game does not use them, so those five models are unused.
+- Compressed cubic curves are stored as the file holds them but not decoded. All 4.6 million skeletal curves of the OOT animation files are cubic and compressed, with an 8 byte header of two floats and two signed bytes or int16s a key; a decode of the key pairs as a value and a slope scaled by the header floats does not match the finite differences of the values (median relative error 0.78), so the layout is something else. Until it is worked out, a renderer cannot evaluate them; bone, material, visibility and shape animations are all in the pack.
+- Material animations are stored by material and parameter name, with each uniform's block offset in the material's `UniformLayoutRecord`; a runtime that plays one joins the two by name.
 - `ShaderSource` entries record which archive a program number came from; a reader does not yet check them against a `.bfsp`.
 
 ## Later

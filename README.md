@@ -35,6 +35,8 @@ A pack is content-addressed. Every piece (vertex stream, index buffer, shape, sk
 
 Models are named by their file's name before the first dot, or `name/model` for a file that holds several. A sampled texture that has no file is reported, not stored, and `--missing <file>` writes the names. The game deduplicated near-identical textures and dropped the files of the copies; `System/Gfx/UnifyTex.Product.100.byml.zs` maps each dropped name to the texture kept (`UnifyTex`). A sampled name with no file of its own that the table maps is stored as a second entry for the kept texture, so a renderer looks every sampler's name up the same way. In the OOT update romfs this resolves 481 of the 482 names that have no file; `Mt_Body_Item_Navigation_DestinationPoint_Rgh` is in neither Tex nor the table, and a renderer should treat such a sampler as unset.
 
+Animations are stored beside the models, one record each, named `stem/animation` (the file's name before the first dot, a slash and the animation's name), in four entry kinds: skeletal, material (general, shader parameter, colour, texture transform and texture pattern, told apart by a kind byte), visibility (bone and material) and shape. They bind by bone, material or shape name, so any model with those names can play them, and a material animation addresses a parameter by name and a byte offset inside it, which the material's uniform layout places in the block. Curves keep their frames and keys exactly as the file holds them. The OOT romfs has 24,414 animations; the whole run with them takes about 28 s. The compressed cubic curves of Switch 2 files are kept as bytes and are not decoded yet (see `TODO.md`).
+
 ## Build
 
 ```bash

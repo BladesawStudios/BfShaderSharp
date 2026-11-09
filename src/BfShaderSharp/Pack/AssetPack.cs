@@ -100,6 +100,14 @@ public sealed class AssetPack : IDisposable
 
     public TextureRecord? Texture(string name) => Find(PackEntryKind.Texture, name) is { } entry ? Record(entry.Key, TextureRecord.Read) : null;
 
+    public SkeletalAnimRecord? SkeletalAnim(string name) => Find(PackEntryKind.SkeletalAnim, name) is { } entry ? Record(entry.Key, SkeletalAnimRecord.Read) : null;
+
+    public MaterialAnimRecord? MaterialAnim(string name) => Find(PackEntryKind.MaterialAnim, name) is { } entry ? Record(entry.Key, MaterialAnimRecord.Read) : null;
+
+    public VisibilityAnimRecord? VisibilityAnim(string name) => Find(PackEntryKind.VisibilityAnim, name) is { } entry ? Record(entry.Key, VisibilityAnimRecord.Read) : null;
+
+    public ShapeAnimRecord? ShapeAnim(string name) => Find(PackEntryKind.ShapeAnim, name) is { } entry ? Record(entry.Key, ShapeAnimRecord.Read) : null;
+
     public MaterialRecord Material(BlobKey key) => Record(key, MaterialRecord.Read);
 
     public UniformLayoutRecord UniformLayout(BlobKey key) => Record(key, UniformLayoutRecord.Read);

@@ -1,4 +1,5 @@
 using BntxSharp;
+using BfresSharp.Model.Animation;
 using BfresSharp.Model;
 using BfresSharp.Model.Geometry;
 using BfresSharp.Model.Material;
@@ -119,6 +120,33 @@ public sealed class ImporterTests : IDisposable
         Assert.Equal(BlobCodec.ZstdFrame, frame.Codec);
         Assert.Equal(16, frame.RawSize);
         Assert.Equal(texture.GetDeswizzledData(0, 0), _romfs.Dictionaries.Decompress(frame.Bytes, "x"));
+    }
+
+    [Fact]
+    public void AnimationsAreStoredByFileAndNameWithTheirCurves()
+    {
+        ResFile file = new();
+        SkeletalAnim skeletal = new() { Name = "Wait", FrameCount = 10 };
+        BoneAnim bone = new() { Name = "Root", BaseData = new BoneAnimData { Scale = new(1, 1, 1), Rotate = new(0, 0, 0, 1), Translate = new(1, 2, 3) } };
+        bone.Curves.Add(new AnimCurve { Frames = [0, 10], Keys = [1, 2, 3, 4, 5, 6, 7, 8], AnimDataOffset = 4 });
+        skeletal.BoneAnims.Add(bone);
+        file.SkeletalAnims.Add("Wait", skeletal);
+        MaterialAnim scroll = new() { Name = "Scroll", FrameCount = 5 };
+        MaterialAnimItem item = new() { Name = "Mt_A" };
+        item.ParamAnimInfos.Add(new ParamAnimInfo { Name = "p_tex_srt0", FloatCurveCount = 1 });
+        scroll.Items.Add(item);
+        file.TexSrtAnims.Add("Scroll", scroll);
+        Assert.Equal(2, AnimationImporter.Import(_context, "Link", file));
+        _writer.Finish();
+        _stream.Dispose();
+        using AssetPack pack = AssetPack.Open(_pack);
+        SkeletalAnimRecord wait = pack.SkeletalAnim("Link/Wait")!;
+        Assert.Equal(10, wait.FrameCount);
+        Assert.Equal([1f, 1, 1, 0, 0, 0, 1, 1, 2, 3], wait.Bones[0].Base);
+        Assert.Equal([1f, 2, 3, 4, 5, 6, 7, 8], wait.Bones[0].Curves[0].Keys);
+        MaterialAnimRecord material = pack.MaterialAnim("Link/Scroll")!;
+        Assert.Equal(3, material.Kind);
+        Assert.Equal("p_tex_srt0", material.Items[0].Params[0].Name);
     }
 
     [Fact]
