@@ -2,9 +2,10 @@
 
 ## Readers
 
-- BNSH container: header, relocation table, shader variations, reflection. Bench: Switch 2 `OOTOfTime` Shader folder.
-- BFSHA archive: shading models, options, program lookup, sampler and uniform block bindings.
-- Corpus survey tests with a time budget.
+- BFSHA: options, key table and program lookup, attributes, samplers, uniform blocks and their uniforms, per-program binding tables, symbols. Models read today: names, counts, BNSH.
+- BFSHA versions other than 9 (the old library read 4 to 9); each version is a layout class chosen once.
+- `ResDict.IndexOf` is a linear scan; walk the patricia tree if lookups show up in profiles.
+- Corpus survey: add a time budget and the BotW/TOTK corpora.
 
 ## Switch 2
 
