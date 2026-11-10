@@ -29,6 +29,14 @@ internal static class LinearTexture
 
         byte[] frame = context.Romfs.Dictionaries.Compress(levels.GetBuffer().AsSpan(0, (int)levels.Length), ZsDictionary.None, context.LinearLevel);
         BlobKey key = context.Pack.AddFrame(frame, (int)levels.Length, 0);
-        return new TextureRecord(key, 0, (uint)texture.Format, texture.Width, texture.Height, texture.Depth, texture.ArrayLength, texture.MipCount, TextureStorage.Linear, sizes);
+        return new TextureRecord(key, 0, (uint)texture.Format, texture.Width, texture.Height, texture.Depth, texture.ArrayLength, texture.MipCount, TextureStorage.Linear, sizes, Channels(texture));
+    }
+
+    private static uint Channels(BntxTexture texture)
+    {
+        if (texture.ChannelTypes.Length < 4) return TextureRecord.IdentityChannels;
+        uint packed = 0;
+        for (int i = 0; i < 4; i++) packed |= (uint)((byte)texture.ChannelTypes[i] & 0xFF) << (8 * i);
+        return packed;
     }
 }
