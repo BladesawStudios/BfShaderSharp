@@ -42,6 +42,8 @@ switch (args[0])
         return OptionsCommand.Run(args);
     case "blocks":
         return BlocksCommand.Run(args);
+    case "unpack" when args.Length >= 3:
+        return Unpack();
     case "bindings":
         return BindingsCommand.Run(args);
     case "inspect":
@@ -70,6 +72,19 @@ int Prepare()
     Console.WriteLine($"{result.Models} models, {result.Programs} programs, {result.Stages} stages ({result.Decompiled} distinct), {result.Failures.Count} failed, {output.Length / 1048576.0:F1} MB in {clock.Elapsed.TotalSeconds:F1} s");
     foreach (var group in result.Failures.GroupBy(f => System.Text.RegularExpressions.Regex.Replace(f.Reason, @" \(at 0x[0-9A-F]+\)", "")).OrderByDescending(g => g.Count()).Take(10))
         Console.WriteLine($"  {group.Count()} x {group.Key} (e.g. {Sample(group).Model} variation {Sample(group).Variation} {Sample(group).Stage}: {Sample(group).Reason})");
+    return 0;
+}
+
+int Unpack()
+{
+    SarcFile archive = SarcFile.FromBinary(Load(args[1]));
+    Directory.CreateDirectory(args[2]);
+    foreach (var entry in archive.Entries)
+    {
+        File.WriteAllBytes(Path.Combine(args[2], entry.Name.Replace('/', '_')), entry.Data);
+        Console.WriteLine($"{entry.Name} {entry.Data.Length}");
+    }
+
     return 0;
 }
 
