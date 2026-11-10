@@ -26,7 +26,7 @@ public class PreparedRoundTripTests
         PreparedModelData model = new("model", [shadows, quality], Rows(0b0100, 0b0101, 0b1001), 1,
             [new PreparedSampler("_a0", "albedo", 0)], [new PreparedAttribute("position", 0, 3)],
             [new PreparedBlock("gsys_material", 2, 1, 16, [new PreparedUniform("tint", 0, 4, 2)], defaults)],
-            [[vertex, -1, -1, -1, fragment, -1], [-1, -1, -1, -1, fragment, -1]],
+            [[vertex, -1, -1, -1, fragment, -1, -1, -1], [-1, -1, -1, -1, fragment, -1, -1, -1]],
             [new PreparedProgramData(0, [new PreparedBinding(1, -1), new PreparedBinding(-1, 2)]),
              new PreparedProgramData(0, [new PreparedBinding(3, 4), new PreparedBinding(5, 6)]),
              new PreparedProgramData(1, [new PreparedBinding(-1, -1), new PreparedBinding(7, 8)])]);

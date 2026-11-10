@@ -201,7 +201,7 @@ namespace Ryujinx.Graphics.Shader.Translation
 
             if (Stage == ShaderStage.Compute)
             {
-                bool usesSharedMemory = _program.UsedFeatures.HasFlag(FeatureFlags.SharedMemory);
+                bool usesSharedMemory = _program.UsedFeatures.HasFlag(FeatureFlags.SharedMemory) || Definitions.Mesh != null;
 
                 resourceManager.SetCurrentSharedMemory(GpuAccessor.QueryComputeSharedMemorySize(), usesSharedMemory);
             }

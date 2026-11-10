@@ -17,7 +17,7 @@ public class MaterialShaderSelectorTests
         BitConverter.TryWriteBytes(rows.AsSpan(0), 0b0100u);
         BitConverter.TryWriteBytes(rows.AsSpan(4), 0b0101u);
         BitConverter.TryWriteBytes(rows.AsSpan(8), 0b1001u);
-        PreparedModelData model = new("model", [shadows, quality], rows, 1, [], [], [], [[-1, -1, -1, -1, -1, -1]],
+        PreparedModelData model = new("model", [shadows, quality], rows, 1, [], [], [], [[-1, -1, -1, -1, -1, -1, -1, -1]],
             [new PreparedProgramData(0, []), new PreparedProgramData(0, []), new PreparedProgramData(0, [])]);
         using MemoryStream stream = new();
         PreparedWriter.Write(stream, [model], blobs);

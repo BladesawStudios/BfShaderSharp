@@ -73,7 +73,8 @@ namespace Ryujinx.Graphics.Shader.Translation
                 ShaderStage.Compute,
                 gpuAccessor.QueryComputeLocalSizeX(),
                 gpuAccessor.QueryComputeLocalSizeY(),
-                gpuAccessor.QueryComputeLocalSizeZ());
+                gpuAccessor.QueryComputeLocalSizeZ(),
+                gpuAccessor.QueryMeshProgram());
         }
 
         private static ShaderDefinitions CreateGraphicsDefinitions(IGpuAccessor gpuAccessor, ShaderHeader header)

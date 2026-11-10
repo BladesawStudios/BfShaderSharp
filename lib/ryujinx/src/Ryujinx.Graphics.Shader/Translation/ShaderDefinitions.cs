@@ -15,6 +15,8 @@ namespace Ryujinx.Graphics.Shader.Translation
         public int ComputeLocalSizeY { get; }
         public int ComputeLocalSizeZ { get; }
 
+        public MeshProgramInfo Mesh { get; }
+
         public bool TessCw => _graphicsState.TessCw;
         public TessPatchType TessPatchType => _graphicsState.TessPatchType;
         public TessSpacing TessSpacing => _graphicsState.TessSpacing;
@@ -113,8 +115,10 @@ namespace Ryujinx.Graphics.Shader.Translation
             ShaderStage stage,
             int computeLocalSizeX,
             int computeLocalSizeY,
-            int computeLocalSizeZ)
+            int computeLocalSizeZ,
+            MeshProgramInfo mesh = null)
         {
+            Mesh = mesh;
             Stage = stage;
             ComputeLocalSizeX = computeLocalSizeX;
             ComputeLocalSizeY = computeLocalSizeY;

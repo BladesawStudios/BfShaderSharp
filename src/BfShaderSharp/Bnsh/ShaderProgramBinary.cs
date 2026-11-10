@@ -29,11 +29,11 @@ public readonly struct ShaderProgramBinary
     public StageReflection? Reflection(ShaderStage stage)
     {
         ulong table = _bnsh.U64(_offset + 0x78);
-        if (table == 0) return null;
+        if (table == 0 || stage > ShaderStage.Compute) return null;
         ulong at = _bnsh.U64((long)table + (long)Array.IndexOf(ReflectionOrder, stage) * 8);
         return at == 0 ? null : new StageReflection(_bnsh, (long)at);
     }
 
     // Stage offsets sit at 0x08 in the order vertex, tessellation control, tessellation evaluation, geometry, fragment, compute.
-    private long StageOffset(ShaderStage stage) => (long)_bnsh.U64(_offset + 8 + (long)stage * 8);
+    private long StageOffset(ShaderStage stage) => stage > ShaderStage.Compute ? 0 : (long)_bnsh.U64(_offset + 8 + (long)stage * 8);
 }

@@ -10,8 +10,8 @@ namespace BfShaderSharp.Prepared;
 internal static class PreparedLayout
 {
     internal const uint Magic = 0x50534642; // "BFSP"
-    internal const uint Version = 1;
-    internal const int StageCount = 6;
+    internal const uint Version = 2;
+    internal const int StageCount = 8;
     internal const int NoBlob = -1;
 
     // Header: magic, version, model count, flags, then u64 model table, string table, blob table, blob data, file size.

@@ -44,7 +44,7 @@ internal sealed class ModelPreparer(StageCompiler stages, BlobPool blobs, int pa
     {
         int[] blobsOfStages = EmptyVariation();
         ShaderProgramBinary binary = entry.Program;
-        foreach (ShaderStage stage in Enum.GetValues<ShaderStage>())
+        foreach (ShaderStage stage in Enum.GetValues<ShaderStage>().Where(s => s <= ShaderStage.Compute))
         {
             if (binary.Code(stage) is not { } code) continue;
             Interlocked.Increment(ref StageCount);

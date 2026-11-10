@@ -88,7 +88,7 @@ internal sealed class ModelSerializer(ByteSink sink, StringPool strings, int[] b
         long at = sink.Length;
         foreach (int[] stages in variations)
         {
-            if (stages.Length != PreparedLayout.StageCount) throw new BfShaderFormatException("A variation must name one blob for each of the six stages");
+            if (stages.Length != PreparedLayout.StageCount) throw new BfShaderFormatException("A variation must name one blob for each of the eight stages");
             foreach (int blob in stages) sink.I32(Blob(blob));
         }
 

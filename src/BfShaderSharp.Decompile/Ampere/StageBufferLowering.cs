@@ -43,7 +43,7 @@ internal static class StageBufferLowering
         // Ra 24-31, offset 40-63, ISBERD dest 16-23, ISBEWR data 32-39; 75 = .32 (else U8), 76-77 = 3 .ATTR (0 the map region), 78 = .SKEW, 79 = .O (the output buffer).
         bool write = c.Opcode == 0x927, output = c.Bits(79, 1) != 0;
         uint region = c.Bits(76, 2);
-        if ((c.Insn.W2 & ~0xf800U) != 0 || (region != 0 && region != 3) || write != output || (!write && region != 3) || (!write && c.Dest == 255))
+        if ((c.Insn.W2 & ~0xf800U) != 0 || (region != 0 && region != 3) || (write && !output) || (!write && region != 3) || (!write && c.Dest == 255))
             return c.Fail("native stage buffer access mode");
         c.Emit(0xefc0000000000000UL | c.Predicate | (write ? c.Bits(32, 8) : c.Dest) | ((ulong)c.Bits(24, 8) << 8) | ((ulong)c.Bits(40, 24) << 20) |
                ((ulong)c.Bits(75, 1) << 44) | (InstructionContext.Flag(region == 3) << 45) | ((ulong)c.Bits(78, 1) << 46) | (InstructionContext.Flag(output) << 47) |

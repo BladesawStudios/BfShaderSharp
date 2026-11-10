@@ -34,6 +34,11 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
             if (context.Definitions.Stage == ShaderStage.Compute)
             {
                 context.AppendLine("#extension GL_ARB_compute_shader : enable");
+
+                if (context.Definitions.Mesh != null)
+                {
+                    context.AppendLine("#extension GL_EXT_mesh_shader : require");
+                }
             }
             else if (context.Definitions.Stage == ShaderStage.Fragment)
             {
@@ -171,6 +176,11 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
                     $"local_size_y = {localSizeY}, " +
                     $"local_size_z = {localSizeZ}) in;");
                 context.AppendLine();
+
+                if (context.Definitions.Mesh != null)
+                {
+                    MeshProgramGenerator.DeclareInterface(context, context.Definitions.Mesh);
+                }
             }
 
             if (context.Definitions.Stage == ShaderStage.Fragment)

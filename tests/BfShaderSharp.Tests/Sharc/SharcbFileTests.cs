@@ -50,11 +50,12 @@ public class SharcbFileTests
     }
 
     [Fact]
-    public void OnlyVertexPixelGeometryAndComputeStagesHaveStageCode()
+    public void EveryStageKindHasStageCodeAndAnUnknownKindDoesNot()
     {
         SharcVariation first = File().Variations[0];
         Assert.Equal(BfShaderSharp.Bnsh.ShaderStage.Vertex, first.ToStageCode().Stage);
-        Assert.Throws<BfShaderUnsupportedException>(() => (first with { Stage = SharcStage.Task }).ToStageCode());
+        Assert.Throws<BfShaderUnsupportedException>(() => (first with { Stage = (SharcStage)7 }).ToStageCode());
+        Assert.Equal(BfShaderSharp.Bnsh.ShaderStage.Mesh, (first with { Stage = SharcStage.Mesh }).ToStageCode().Stage);
     }
 
     [Fact]

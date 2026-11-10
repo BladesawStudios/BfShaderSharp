@@ -93,6 +93,15 @@ namespace Ryujinx.Graphics.Shader
         }
 
         /// <summary>
+        /// Queries the task or mesh program a compute-style translation stands for.
+        /// </summary>
+        /// <returns>The mesh program, or null for an ordinary compute shader</returns>
+        MeshProgramInfo QueryMeshProgram()
+        {
+            return null;
+        }
+
+        /// <summary>
         /// Queries Local Memory size in bytes for compute shaders.
         /// </summary>
         /// <returns>Local Memory size in bytes</returns>

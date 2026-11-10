@@ -5,8 +5,18 @@ namespace BfShaderSharp.Decompile;
 
 /// <summary>Serves the translator the program image and answers its other questions with the translator's defaults.</summary>
 /// <remarks>Constant buffer 1 reads return zero unless immediate constants were supplied.</remarks>
-internal sealed class GpuAccessor(byte[] image, byte[] constants) : IGpuAccessor
+internal sealed class GpuAccessor(byte[] image, byte[] constants, (int X, int Y, int Z) workgroup, MeshProgramInfo? mesh = null) : IGpuAccessor
 {
+    public MeshProgramInfo QueryMeshProgram() => mesh!;
+
+    public int QueryComputeSharedMemorySize() => mesh?.SharedMemoryBytes ?? 0xc000;
+
+    public int QueryComputeLocalSizeX() => workgroup.X;
+
+    public int QueryComputeLocalSizeY() => workgroup.Y;
+
+    public int QueryComputeLocalSizeZ() => workgroup.Z;
+
     public uint ConstantBuffer1Read(int offset) =>
         offset >= 0 && offset + 4 <= constants.Length ? BitConverter.ToUInt32(constants, offset) : 0;
 

@@ -28,7 +28,7 @@ public sealed record PreparedProgramData(int Variation, IReadOnlyList<PreparedBi
 
 /// <summary>Everything the writer stores for one shading model.</summary>
 /// <remarks>
-/// Variations are lists of six blob indices, one for each stage in the order of <c>ShaderStage</c>, with -1 for a stage the
+/// Variations are lists of eight blob indices, one for each stage in the order of <c>ShaderStage</c>, with -1 for a stage the
 /// variation does not have. Key rows are the raw rows of the archive, one for each program, so the lookup is unchanged.
 /// </remarks>
 public sealed record PreparedModelData(

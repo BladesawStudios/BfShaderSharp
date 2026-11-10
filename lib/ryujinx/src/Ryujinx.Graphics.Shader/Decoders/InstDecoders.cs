@@ -3295,6 +3295,21 @@ namespace Ryujinx.Graphics.Shader.Decoders
         public bool P => (_opcode & 0x80000000) != 0;
     }
 
+    // The stage buffer access of a Switch 2 task or mesh program, as the Ampere lowering writes it: data in 0-7, address register in 8-15,
+    // predicate in 16-19, byte offset in 20-43, then the 32-bit, attribute, skew, output and write flags.
+    readonly struct InstIsbeNx2
+    {
+        private readonly ulong _opcode;
+        public InstIsbeNx2(ulong opcode) => _opcode = opcode;
+        public int Data => (int)(_opcode & 0xFF);
+        public int SrcA => (int)((_opcode >> 8) & 0xFF);
+        public int Offset => (int)((_opcode >> 20) & 0xFFFFFF);
+        public bool Is32 => (_opcode & 0x100000000000) != 0;
+        public bool Attribute => (_opcode & 0x200000000000) != 0;
+        public bool Output => (_opcode & 0x800000000000) != 0;
+        public bool Write => (_opcode & 0x1000000000000) != 0;
+    }
+
     readonly struct InstIscaddR
     {
         private readonly ulong _opcode;

@@ -34,7 +34,16 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
                 }
             }
 
-            PrintFunction(context, info.Functions[0], MainFunctionName);
+            if (context.Definitions.Mesh != null)
+            {
+                PrintFunction(context, info.Functions[0], MeshProgramGenerator.BodyName);
+                context.AppendLine();
+                MeshProgramGenerator.PrintEntryPoint(context, context.Definitions.Mesh);
+            }
+            else
+            {
+                PrintFunction(context, info.Functions[0], MainFunctionName);
+            }
 
             return context.GetCode();
         }
@@ -48,7 +57,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Glsl
 
             Declarations.DeclareLocals(context, function);
 
-            PrintBlock(context, function.MainBlock, funcName == MainFunctionName);
+            PrintBlock(context, function.MainBlock, funcName == MainFunctionName || funcName == MeshProgramGenerator.BodyName);
 
             context.LeaveScope();
         }

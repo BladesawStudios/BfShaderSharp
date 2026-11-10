@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using BfShaderSharp.Bnsh;
+using BfShaderSharp.Errors;
 using BfShaderSharp.Prepared;
 using BfShaderSharp.Sharc;
 
@@ -9,8 +10,7 @@ namespace BfShaderSharp.Preparation;
 /// <remarks>
 /// The samplers, uniform blocks and attributes are the union of what the program's stages bind, in the order they are first
 /// seen. A combination's bindings give the slot each stage binds a sampler or block to, with the pixel stage in the fragment
-/// slot and the compute stage in the vertex slot, since a compute program has no vertex stage. Prepared files have no
-/// place for task and mesh stages, so those are reported as failed stages and stored as absent.
+/// slot and the compute, task and mesh stages in the vertex slot, since none of them has a vertex stage beside it.
 /// </remarks>
 internal sealed class SharcProgramPreparer(SharcbFile file, StageCompiler stages, int parallelism)
 {
@@ -58,12 +58,7 @@ internal sealed class SharcProgramPreparer(SharcbFile file, StageCompiler stages
         {
             SharcVariation variation = file.Variation(program, combination, kind);
             Interlocked.Increment(ref StageCount);
-            if (SlotOf(kind) is not { } slot)
-            {
-                Failures.Add(new StageFailure(program.Name, combination, kind.ToString(), "Prepared files have no place for this stage kind"));
-                continue;
-            }
-
+            ShaderStage slot = SlotOf(kind);
             compiled.Add(variation);
             var (blob, error) = stages.Compile(variation.ToStageCode());
             slots[(int)slot] = blob;
@@ -73,13 +68,15 @@ internal sealed class SharcProgramPreparer(SharcbFile file, StageCompiler stages
         return slots;
     }
 
-    private static ShaderStage? SlotOf(SharcStage kind) => kind switch
+    private static ShaderStage SlotOf(SharcStage kind) => kind switch
     {
         SharcStage.Vertex => ShaderStage.Vertex,
         SharcStage.Pixel => ShaderStage.Fragment,
         SharcStage.Geometry => ShaderStage.Geometry,
         SharcStage.Compute => ShaderStage.Compute,
-        _ => null,
+        SharcStage.Task => ShaderStage.Task,
+        SharcStage.Mesh => ShaderStage.Mesh,
+        _ => throw new BfShaderUnsupportedException($"Stage kind {(int)kind} has no slot"),
     };
 
     private static List<PreparedBinding> Bindings(List<SharcVariation> compiled, Dictionary<string, int> samplers, Dictionary<string, int> blocks)
