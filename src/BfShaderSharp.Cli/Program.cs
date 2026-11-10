@@ -37,6 +37,8 @@ switch (args[0])
         return AssetsCommand.Run(args);
     case "model" when args.Length >= 4:
         return AssetsCommand.Model(args);
+    case "blocks":
+        return BlocksCommand.Run(args);
     case "inspect":
         return AssetsCommand.Inspect(args);
     default:
