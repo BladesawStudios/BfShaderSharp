@@ -65,7 +65,7 @@ internal static class LeaLowering
     private static bool LowWord(InstructionContext c)
     {
         uint opcode = c.Opcode, carryOut = c.Bits(81, 3);
-        if (c.Bits(72, 1) != 0 || c.Bits(74, 1) != 0 || (carryOut != 7 && ((opcode != 0x811 && c.Bits(63, 1) != 0) || (c.RewrittenUniform && (opcode != 0x211 || carryOut > 1)))) ||
+        if (c.Bits(72, 1) != 0 || c.Bits(74, 1) != 0 || (carryOut != 7 && ((opcode != 0x811 && c.Bits(63, 1) != 0) || (c.RewrittenUniform && opcode != 0x211))) ||
             ((opcode == 0x211 || opcode == 0xa11) && c.Bits(62, 1) != 0) || (opcode == 0xc11 && (c.Insn.W1 & ~0x8000003fU) != 0))
             return c.Fail("native LEA carry/high mode");
         // 0x211 bit 63 negates Rb (LEA Rd, Ra, -Rb, s), as Maxwell ISCADD's bit 48.

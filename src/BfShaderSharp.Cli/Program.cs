@@ -61,7 +61,8 @@ int Prepare()
         ? SharcPreparer.Prepare(SharcbFile.Read(input), output, quality, threads, progress)
         : ArchivePreparer.Prepare(BfshaFile.Read(input), output, quality, threads, progress);
     Console.WriteLine($"{result.Models} models, {result.Programs} programs, {result.Stages} stages ({result.Decompiled} distinct), {result.Failures.Count} failed, {output.Length / 1048576.0:F1} MB in {clock.Elapsed.TotalSeconds:F1} s");
-    foreach (StageFailure failure in result.Failures.Take(10)) Console.WriteLine($"  {failure.Model} variation {failure.Variation} {failure.Stage}: {failure.Reason}");
+    foreach (var group in result.Failures.GroupBy(f => System.Text.RegularExpressions.Regex.Replace(f.Reason, @" \(at 0x[0-9A-F]+\)", "")).OrderByDescending(g => g.Count()).Take(10))
+        Console.WriteLine($"  {group.Count()} x {group.Key} (e.g. {Sample(group).Model} variation {Sample(group).Variation} {Sample(group).Stage}: {Sample(group).Reason})");
     return 0;
 }
 
@@ -110,6 +111,8 @@ string? Option(string name)
     int at = Array.IndexOf(args, name);
     return at >= 0 && at + 1 < args.Length ? args[at + 1] : null;
 }
+
+static StageFailure Sample(IEnumerable<StageFailure> group) => group.OrderBy(f => f.Model, StringComparer.Ordinal).ThenBy(f => f.Variation).First();
 
 static int Fail(string message)
 {

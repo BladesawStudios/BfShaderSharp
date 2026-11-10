@@ -3,7 +3,7 @@ namespace BfShaderSharp.Decompile.Ampere;
 /// <summary>Lowers atomic and reduction operations on shared and global memory.</summary>
 /// <remarks>
 /// Shared-memory atomics map onto ATOMS with a word-aligned offset; the population-count increment adds one per active
-/// lane. Global atomics and reductions take a 64-bit address from a register pair or a uniform pointer and a signed
+/// lane. Global atomics, compare-and-swaps and reductions take a 64-bit address from a register pair or a uniform pointer and a signed
 /// 20-bit offset, and operate on 32-bit words. The operation numbering matches Maxwell's. Ported from the Eden emulator
 /// (GPL-3.0-or-later).
 /// </remarks>
@@ -15,6 +15,7 @@ internal static class AtomicLowering
         table.Add(SharedIncrement, 0xf8c);
         table.Add(SharedAtomic, 0x38c);
         table.Add(GlobalAtomic, 0x3a8);
+        table.Add(GlobalCompareSwap, 0x3a9);
         table.Add(UniformGlobalAtomic, 0x9a8);
     }
 
@@ -72,6 +73,16 @@ internal static class AtomicLowering
             return c.Fail("native global atomic register mode");
         c.Emit(0xed00000000000000UL | c.Predicate | c.Dest | ((ulong)address << 8) | ((ulong)c.Bits(32, 8) << 20) | ((ulong)((uint)offset & 0xfffff) << 28) |
                (1UL << 48) | ((ulong)operation << 52));
+        return true;
+    }
+
+    // ATOMG.E.CAS.STRONG.GPU U32: the compare value in Rb and the new value in the register after it, as Maxwell's ATOM.CAS reads them. Maxwell's form has no offset.
+    private static bool GlobalCompareSwap(InstructionContext c)
+    {
+        uint address = c.Bits(24, 8), compare = c.Bits(32, 8);
+        if ((c.Insn.W2 & ~0x078000ffU) != 0x001ee100 || c.Bits(64, 8) != compare + 1 || c.Bits(40, 24) != 0 || c.Bits(87, 4) != 0 || (address & 1) != 0 || address >= 246 || compare >= 245)
+            return c.Fail("native global compare-and-swap mode");
+        c.Emit(0xeef0000000000000UL | c.Predicate | c.Dest | ((ulong)address << 8) | ((ulong)compare << 20) | (1UL << 48));
         return true;
     }
 

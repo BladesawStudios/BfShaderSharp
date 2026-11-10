@@ -39,14 +39,21 @@ internal static class FloatToIntegerLowering
         return true;
     }
 
-    // F2I with a packed byte result: rewritten as the word form, then lowered as that.
+    // F2IP.U8: the float converted to a byte below the accumulator in Ra, which moves up one byte (Rd = Ra << 8 | byte); with no accumulator (RZ) just the byte.
+    // It is lowered as the word form with the same rounding (bits 78-79); with an accumulator the byte goes to scratch first, so the accumulator may be the destination.
     private static bool Packed(InstructionContext c)
     {
-        if (c.Bits(24, 8) != 255 || (c.Insn.W1 & ~0xffU) != 0 || c.Insn.W2 != 0x0000c4ffU) return c.Fail("native packed float-to-byte mode");
+        uint accumulator = c.Bits(24, 8);
+        if ((c.Insn.W1 & ~0xffU) != 0 || (c.Insn.W2 & ~0xc000U) != 0x000004ffU) return c.Fail("native packed float-to-byte mode");
         c.Insn.W0 &= 0x00ffffffU;
-        c.Insn.W2 = 0x0021e000U;
+        c.Insn.W2 = 0x0021e000U | (c.Insn.W2 & 0xc000U);
         c.Opcode = 0x305;
-        return Convert(c);
+        if (accumulator == 255) return Convert(c);
+        ulong destination = c.Dest;
+        c.Dest = 250;
+        if (!Convert(c)) return false;
+        c.Emit(0x5c18000000000000UL | c.Predicate | destination | ((ulong)accumulator << 8) | (250UL << 20) | (8UL << 39));
+        return true;
     }
 
     private static Mode Classify(InstructionContext c, uint word)

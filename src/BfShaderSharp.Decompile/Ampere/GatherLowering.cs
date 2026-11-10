@@ -1,6 +1,6 @@
 namespace BfShaderSharp.Decompile.Ampere;
 
-/// <summary>Lowers the texture gather (TLD4) for 2D and array textures, with texel offsets, per-tap offsets and half results.</summary>
+/// <summary>Lowers the texture gather (TLD4) for 2D and array textures, with texel offsets, per-tap offsets, a depth reference and half results.</summary>
 /// <remarks>
 /// The coordinates are gathered into R250.. and the gather writes its packed results there, which are then copied to
 /// the destinations (or packed into half pairs). A texel offset becomes Maxwell AOFFI from a register; per-tap offsets
@@ -13,7 +13,7 @@ internal static class GatherLowering
 
     private sealed class Tap
     {
-        public bool Bindless, Offsets, PerTap, Half, Array;
+        public bool Bindless, Offsets, PerTap, Half, Array, Compare;
         public uint Handle, Mask, SecondDest, SourceA, SourceB, Binding, Limit, Dest;
     }
 
@@ -24,7 +24,7 @@ internal static class GatherLowering
         {
             Bindless = bindless, Handle = bindless ? c.UniformRegister(c.Bits(40, 6)) : 255, Mask = c.Bits(72, 4), SecondDest = c.Bits(64, 8),
             SourceA = c.Bits(24, 8), SourceB = c.Bits(32, 8), Binding = c.Bits(54, 5), Offsets = c.Bits(76, 1) != 0, PerTap = c.Bits(76, 2) == 2,
-            Half = c.Bits(79, 1) != 0, Array = c.Bits(61, 3) == 5, Dest = (uint)c.Dest, Limit = c.State.UsesUniformBank ? c.State.HighUniformBase : 246U,
+            Half = c.Bits(79, 1) != 0, Compare = c.Bits(78, 1) != 0 && c.Bits(76, 2) < 2, Array = c.Bits(61, 3) == 5, Dest = (uint)c.Dest, Limit = c.State.UsesUniformBank ? c.State.HighUniformBase : 246U,
         };
     }
 
@@ -47,21 +47,32 @@ internal static class GatherLowering
         t.Bindless || t.Offsets || t.PerTap || c.Bits(60, 1) == 0 || c.Bits(80, 1) != 0 || c.Bits(91, 1) != 0 || (t.SourceB != 255 && t.SourceB >= t.Limit) ||
         t.Mask != 15 || t.Dest >= t.Limit || t.SecondDest >= t.Limit;
 
-    private static bool Invalid(InstructionContext c, Tap t)
+    // The first thing about the instruction that the lowering cannot handle, or null when it can be lowered.
+    private static string? Invalid(InstructionContext c, Tap t)
     {
         bool binding = t.Bindless ? t.Handle >= 246 || c.Bits(46, 13) != 0 || c.Bits(91, 1) == 0
                                   : c.Bits(40, 14) > 0x1fff || t.Binding >= 18 || !c.BindTextureBuffer(t.Binding);
-        return (c.Bits(61, 3) != 1 && !t.Array) || (c.Bits(77, 2) != 0 && !t.PerTap) || c.Bits(81, 3) != 7 || c.Bits(59, 1) != 0 ||
-               (t.Array && !t.Bindless && BadArray(c, t)) || (t.Half && BadHalf(c, t)) ||
-               (t.Offsets && (t.Bindless || t.SourceB == 255 || (t.SourceA != 255 && t.SourceA >= 245))) ||
-               (t.PerTap && (t.Bindless || c.Bits(78, 3) != 0 || c.Bits(91, 1) != 0)) || c.Bits(89, 1) != 0 || t.Mask == 0 || binding;
+        (bool Bad, string Why)[] checks =
+        [
+            (c.Bits(61, 3) != 1 && !t.Array, "texture type"), ((c.Bits(77, 1) != 0 && !t.PerTap) || (c.Bits(78, 1) != 0 && !t.Compare && !t.PerTap), "offset mode"), (t.Compare && (t.Bindless || t.Array || t.Half || t.SourceB == 255 || t.SourceB + 1 >= t.Limit), "depth compare operands"), (c.Bits(81, 3) != 7, "bits 81-83"),
+            (c.Bits(59, 1) != 0, "bit 59"), (t.Array && !t.Bindless && BadArray(c, t), "array operands"), (t.Half && BadHalf(c, t), "half operands"),
+            (t.Offsets && (t.Bindless || t.SourceB == 255 || (t.SourceA != 255 && t.SourceA >= 245)), "offset operands"),
+            (t.PerTap && (t.Bindless || c.Bits(78, 1) != 0 || c.Bits(79, 2) != 0 || c.Bits(91, 1) != 0), "per-tap operands"), (c.Bits(89, 1) != 0, "bit 89"), (t.Mask == 0, "empty mask"),
+            (binding, "binding"),
+        ];
+        foreach ((bool bad, string why) in checks)
+        {
+            if (bad) return why;
+        }
+
+        return null;
     }
 
     private static bool Gather(InstructionContext c)
     {
         Tap t = Decode(c);
         if (t.Bindless && t.Array && BadBindlessArray(c, t)) return c.Fail("native uniform array texture gather mode");
-        if (Invalid(c, t)) return c.Fail("native texture gather mode");
+        if (Invalid(c, t) is { } why) return c.Fail($"native texture gather mode ({why})");
         if (t.PerTap && !LoadPerTapOffsets(c, t)) return false;
         EmitGather(c, t);
         if (t.Half) PackHalves(c, t);
@@ -83,11 +94,12 @@ internal static class GatherLowering
     // Two coordinates: x in Ra, y in Rb (the list splits evenly across them); with an offset, x and y in Ra, Ra+1 and the offset in Rb.
     private static void EmitGather(InstructionContext c, Tap t)
     {
-        uint y = !t.Offsets && !t.PerTap ? t.SourceB : t.SourceA == 255 ? 255U : t.SourceA + 1;
+        uint y = !t.Offsets && !t.PerTap && !t.Compare ? t.SourceB : t.SourceA == 255 ? 255U : t.SourceA + 1;
         TextureSupport.Copy(c, 250, t.SourceA);
         TextureSupport.Copy(c, 251, t.Array ? t.SourceA + 1 : y);
         if (t.Array) TextureSupport.Copy(c, 252, t.SourceB);
         if (t.Offsets) TextureSupport.Copy(c, 246, t.SourceB);
+        if (t.Compare) TextureSupport.Copy(c, t.Offsets ? 247U : 246U, t.Offsets ? t.SourceB + 1 : t.SourceB);
         ulong type = t.Array ? 3UL : 2UL;
         if (t.Bindless)
         {
@@ -97,10 +109,10 @@ internal static class GatherLowering
             return;
         }
 
-        uint offsetRegister = t.PerTap ? 248U : t.Offsets ? 246U : 255U;
+        uint offsetRegister = t.PerTap ? 248U : t.Offsets || t.Compare ? 246U : 255U;
         ulong offsetMode = t.PerTap ? 2UL : t.Offsets ? 1UL : 0UL;
         c.Emit(0xc800000000000000UL | c.Predicate | 250 | (250UL << 8) | ((ulong)offsetRegister << 20) | (type << 28) | ((ulong)t.Mask << 31) |
-               ((ulong)c.Bits(40, 14) << 36) | ((ulong)c.Bits(90, 1) << 49) | (7UL << 51) | (offsetMode << 54) | ((ulong)c.Bits(87, 2) << 56));
+               ((ulong)c.Bits(40, 14) << 36) | ((ulong)c.Bits(90, 1) << 49) | (InstructionContext.Flag(t.Compare) << 50) | (7UL << 51) | (offsetMode << 54) | ((ulong)c.Bits(87, 2) << 56));
     }
 
     // Half results: each pair of 32-bit results is packed into one register as two halves.

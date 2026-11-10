@@ -67,8 +67,7 @@ internal static class IntegerAddLowering
         bool carryIn = c.Bits(74, 1) != 0;
         uint carryOut = c.Bits(81, 3), a = c.Bits(24, 8);
         bool uniform = c.RewrittenUniform;
-        if ((carryIn && carryOut != 7) || (c.Opcode == 0x210 && (c.Insn.W1 & ~0xffU) != 0) || (uniform && carryOut != 7 && carryOut > 1) ||
-            (uniform && carryIn && c.Bits(87, 3) > 1 && c.Bits(87, 3) != 7))
+        if ((carryIn && carryOut != 7) || (c.Opcode == 0x210 && (c.Insn.W1 & ~0xffU) != 0))
             return c.Fail("native integer carry mode");
         if (c.Opcode == 0x810) c.Emit(0x1c00000000000000UL | c.Predicate | 250 | ((ulong)a << 8) | ((ulong)c.Insn.W1 << 20));
         else c.Emit(0x5c10000000000000UL | c.Predicate | 250 | ((ulong)a << 8) | ((ulong)c.Bits(32, 8) << 20));

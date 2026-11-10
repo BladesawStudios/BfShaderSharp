@@ -44,14 +44,14 @@ internal static class UniformDatapathLowering
     private static bool LoadConstant(InstructionContext c)
     {
         uint opcode = c.Opcode, uniformDestination = c.Bits(16, 8), indexRegister = c.Bits(24, 8), width = c.Bits(73, 3);
-        bool subwordLoad = opcode == 0xab9 && (width == 0 || width == 2);
+        bool subwordLoad = (opcode == 0xab9 || opcode == 0xabb) && (width == 0 || width == 2);
         uint offset = c.Bits(38, 16);
         uint alignment = width == 0 ? 1u : width == 2 ? 2u : 4u;
         uint target = c.UniformRegister(uniformDestination);
         uint indexTarget = opcode == 0xabb ? c.UniformRegister(indexRegister) : 255U;
-        if (target == uint.MaxValue || target == 255 || (!subwordLoad && width != 4 && width != 5) || (subwordLoad && offset >= 0x8000) ||
+        if (target == uint.MaxValue || target == 255 || (!subwordLoad && width != 4 && width != 5) || (subwordLoad && opcode == 0xab9 && offset >= 0x8000) ||
             (width == 5 && ((uniformDestination & 1) != 0 || c.UniformRegister(uniformDestination + 1) != target + 1)) ||
-            c.Bank() >= 18 || offset % alignment != 0 || c.Bits(62, 2) != 0 || (c.Insn.W2 & ~0xe00U) != (opcode == 0xab9 ? 0U : 0x08000000U) ||
+            c.Bank() >= 18 || (opcode != 0xabb && offset % alignment != 0) || c.Bits(62, 2) != 0 || (c.Insn.W2 & ~0xe00U) != (opcode == 0xab9 ? 0U : 0x08000000U) ||
             indexTarget == uint.MaxValue)
             return c.Fail("native uniform constant load mode");
         if (opcode == 0xab9 && width == 4)

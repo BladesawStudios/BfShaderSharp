@@ -65,7 +65,7 @@ internal static class IntegerToFloatLowering
         }
 
         // I2F.{U,S}8 Rd, Rs.B0-B3: the byte selector (bits 60-61) as Maxwell's (41-42).
-        if ((word & ~0x400U) != (opcode == 0xd06 ? 0x08001000U : 0x1000U) || (c.Insn.W1 & (opcode == 0xd06 ? 0xffffff00U : 0xcfffff00U)) != 0 || source == uint.MaxValue)
+        if ((word & ~0x400U) != (opcode == 0xd06 ? 0x08001000U : 0x1000U) || (c.Insn.W1 & 0xcfffff00U) != 0 || source == uint.MaxValue)
             return c.Fail("native byte-to-float conversion mode");
         c.Emit(c.Base(0x5cb8000000000000UL) | (2UL << 8) | ((ulong)c.Bits(74, 1) << 13) | ((ulong)source << 20) | ((ulong)c.Bits(60, 2) << 41));
         return true;
