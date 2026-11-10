@@ -18,6 +18,7 @@ using ZsDicSharp;
 // bfshader assets <romfs> <out.bfap> [--model <pattern>]... [--all-textures|--no-textures] [--linear-textures] [--shaders <folder> [--all-programs]] [--threads <n>]
 // bfshader model <romfs> <model.bfres[.zs]> <out.bfap> [--texture <file.bntx[.zs]>]...
 // bfshader inspect <file.bfap> [<model>]
+// bfshader decompress <file.zs> <out>
 // bfshader bindings <file.bfsp> <model> <program>
 // bfshader select <file.bfsp> <model.bfres[.zs]> [<material>] [--option <name>=<choice>]...
 const string Usage = "usage: bfshader list <file.bfsha[.zs]>\n       bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]\n       bfshader show <file.bfsp> [<model> <program> <stage>]\n       bfshader select <file.bfsp> <model.bfres[.zs]> [<material>] [--option <name>=<choice>]...";
@@ -44,6 +45,9 @@ switch (args[0])
         return BlocksCommand.Run(args);
     case "unpack" when args.Length >= 3:
         return Unpack();
+    case "decompress" when args.Length >= 3:
+        File.WriteAllBytes(args[2], Load(args[1]));
+        return 0;
     case "bindings":
         return BindingsCommand.Run(args);
     case "inspect":
