@@ -38,6 +38,8 @@ switch (args[0])
         return AssetsCommand.Run(args);
     case "model" when args.Length >= 4:
         return AssetsCommand.Model(args);
+    case "options":
+        return OptionsCommand.Run(args);
     case "blocks":
         return BlocksCommand.Run(args);
     case "bindings":

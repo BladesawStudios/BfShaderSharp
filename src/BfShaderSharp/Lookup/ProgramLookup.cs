@@ -49,6 +49,8 @@ public sealed class ProgramLookup
 
     public int ProgramCount => _programCount;
 
+    public IReadOnlyList<LookupOption> Options => _options;
+
     public int Find(IReadOnlyDictionary<string, string> choices)
     {
         uint[] row = (uint[])_defaultRow.Clone();
