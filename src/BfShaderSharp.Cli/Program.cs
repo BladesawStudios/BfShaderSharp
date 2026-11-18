@@ -18,7 +18,7 @@ using ZsDicSharp;
 // bfshader assets <romfs> <out.bfap> [--model <pattern>]... [--all-textures|--no-textures] [--linear-textures] [--shaders <folder> [--all-programs]] [--threads <n>]
 // bfshader model <romfs> <model.bfres[.zs]> <out.bfap> [--texture <file.bntx[.zs]>]...
 // bfshader inspect <file.bfap> [<model>]
-// bfshader decompress <file.zs> <out>
+// bfshader decompress <file.zs|file.mc> <out>
 // bfshader bindings <file.bfsp> <model> <program>
 // bfshader select <file.bfsp> <model.bfres[.zs]> [<material>] [--option <name>=<choice>]...
 const string Usage = "usage: bfshader list <file.bfsha[.zs]>\n       bfshader prepare <file.bfsha[.zs]> <out.bfsp> [--quality <0-11>] [--threads <n>]\n       bfshader show <file.bfsp> [<model> <program> <stage>]\n       bfshader select <file.bfsp> <model.bfres[.zs]> [<material>] [--option <name>=<choice>]...";
@@ -158,17 +158,5 @@ static Dictionary<ulong, string> ExternalNames(string path)
     return [];
 }
 
-// A compressed file is opened with the dictionaries of the nearest ancestor romfs that has them.
-static byte[] Load(string path)
-{
-    byte[] data = File.ReadAllBytes(path);
-    if (!ZsDic.IsCompressed(data)) return data;
-    for (DirectoryInfo? dir = new(Path.GetDirectoryName(Path.GetFullPath(path))!); dir is not null; dir = dir.Parent)
-    {
-        if (!File.Exists(Path.Combine(dir.FullName, "Pack", "ZsDic.pack.zs"))) continue;
-        using ZsDic dictionaries = ZsDic.FromRomfs(dir.FullName);
-        return dictionaries.Decompress(data, path);
-    }
-
-    throw new InvalidOperationException("The file is compressed and no ancestor folder has Pack/ZsDic.pack.zs");
-}
+// A compressed file (zstd or mesh codec) is opened with the dictionaries of the nearest ancestor romfs that has them.
+static byte[] Load(string path) => BfShaderSharp.Assets.GameFile.Read(path);

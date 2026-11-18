@@ -48,7 +48,7 @@ public sealed class RomfsFiles : IDisposable
     public byte[] Read(string path)
     {
         byte[] data = File.ReadAllBytes(path);
-        return ZsDic.IsCompressed(data) ? _dictionaries.Decompress(data, path) : data;
+        return GameFile.Decode(data, path, _dictionaries);
     }
 
     public Dictionary<ulong, string> ExternalNames()
