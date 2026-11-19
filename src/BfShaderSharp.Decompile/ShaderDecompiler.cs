@@ -42,7 +42,7 @@ public static class ShaderDecompiler
     /// <summary>Decompiles to UTF-8 text in a buffer reused by the next call on the same thread; dispose it when done.</summary>
     public static Utf8Code ToGlslUtf8(ShaderStageCode code, bool debug = false)
     {
-        if (!code.IsAmpere) return MaxwellNative.Translate(code, debug);
+        if (code.Architecture == ShaderArchitecture.Maxwell) return MaxwellNative.Translate(code, debug);
         ReadOnlySpan<byte> bytes = code.ByteCode.Span;
         bool compute = code.Stage == ShaderStage.Compute;
         bool meshStage = code.Stage is ShaderStage.Task or ShaderStage.Mesh;
