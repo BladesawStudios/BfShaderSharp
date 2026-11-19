@@ -18,7 +18,7 @@ public static class AssetPreparer
         Dictionary<ulong, string> names = romfs.ExternalNames();
         ShaderArchiveSet shaders = ShaderArchiveSet.Load(romfs, names);
         PackWriter pack = new(output, options.Quality);
-        AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel);
+        AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel, options.AssignTypes);
         foreach ((string name, BlobKey source) in shaders.Sources) pack.AddEntry(PackEntryKind.ShaderSource, name, source);
         ParallelOptions parallel = new() { MaxDegreeOfParallelism = options.Parallelism > 0 ? options.Parallelism : Environment.ProcessorCount };
         context.Unify = UnifyTex.Load(romfs);

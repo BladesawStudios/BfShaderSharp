@@ -10,7 +10,7 @@ namespace BfShaderSharp.Assets;
 /// UsedTextures collects the names of the textures that imported materials sample, so the texture step can import only
 /// those, and Programs the shader programs they run. All members are safe to use from many threads.
 /// </remarks>
-public sealed class AssetContext(PackWriter pack, RomfsFiles romfs, ShaderArchiveSet shaders, IReadOnlyDictionary<ulong, string> names, TextureStorage storage = TextureStorage.Native, int linearLevel = 3)
+public sealed class AssetContext(PackWriter pack, RomfsFiles romfs, ShaderArchiveSet shaders, IReadOnlyDictionary<ulong, string> names, TextureStorage storage = TextureStorage.Native, int linearLevel = 3, IReadOnlyList<string>? assignTypes = null)
 {
     public PackWriter Pack { get; } = pack;
 
@@ -35,4 +35,7 @@ public sealed class AssetContext(PackWriter pack, RomfsFiles romfs, ShaderArchiv
     public int LinearLevel { get; } = linearLevel;
 
     public ProgramUse Programs { get; } = new();
+
+    // The draw passes whose programs are chosen for every shape of an imported model; none by default.
+    public IReadOnlyList<string> AssignTypes { get; } = assignTypes ?? [];
 }

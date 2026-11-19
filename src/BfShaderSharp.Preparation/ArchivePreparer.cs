@@ -11,10 +11,10 @@ namespace BfShaderSharp.Preparation;
 /// </remarks>
 public static class ArchivePreparer
 {
-    public static PreparationResult Prepare(BfshaFile archive, Stream output, int compressionQuality = 5, int parallelism = 0, IProgress<string>? progress = null, IReadOnlyDictionary<string, IReadOnlySet<int>>? wanted = null)
+    public static PreparationResult Prepare(BfshaFile archive, Stream output, int compressionQuality = 5, int parallelism = 0, IProgress<string>? progress = null, IReadOnlyDictionary<string, IReadOnlySet<int>>? wanted = null, StageText text = StageText.Raw)
     {
         BlobPool blobs = new(compressionQuality);
-        StageCompiler stages = new(blobs);
+        StageCompiler stages = new(blobs, text);
         ModelPreparer preparer = new(stages, blobs, parallelism > 0 ? parallelism : Environment.ProcessorCount);
         List<PreparedModelData> models = [];
         foreach (ShaderModel model in archive.Models())

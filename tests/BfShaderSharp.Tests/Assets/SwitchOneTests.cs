@@ -176,6 +176,24 @@ public sealed class SwitchOneTests
         }
     }
 
+    // A pass names the program a renderer draws each shape with, so the programs a model needs grow by the passes it is asked for.
+    [TotkFact]
+    public void DrawPassesAddTheirProgramsToWhatAModelNeeds()
+    {
+        int Programs(IReadOnlyList<string>? passes)
+        {
+            int count = 0;
+            AssetOptions options = new(GameRomfs.Totk!, ["Npc_Zelda_AncientHyrule*"], TextureSelection.None, AssignTypes: passes);
+            AssetPreparer.Prepare(options, Stream.Null, use => count = use.Count);
+            return count;
+        }
+
+        int plain = Programs(null);
+        int withPasses = Programs(["gsys_assign_gbuffer", "gsys_assign_zonly", "gsys_assign_material"]);
+        Assert.True(plain > 0);
+        Assert.True(withPasses > plain, $"{withPasses} programs with passes, {plain} without");
+    }
+
     [TotkFact]
     public void ATotkModelPreparesWithItsTxtgTextures()
     {

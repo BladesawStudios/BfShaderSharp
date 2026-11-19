@@ -37,8 +37,11 @@ public sealed class ShaderArchiveSet
         return set;
     }
 
-    public int Select(Material material) =>
-        _selectors.TryGetValue(material.ShaderAssign.ShaderArchiveName, out MaterialShaderSelector? selector) ? selector.Select(material) : -1;
+    public int Select(Material material) => Select(material, null);
+
+    /// <summary>The program the material runs under the draw-time options a renderer sets, which win over the material's own.</summary>
+    public int Select(Material material, IReadOnlyDictionary<string, string>? drawTime) =>
+        _selectors.TryGetValue(material.ShaderAssign.ShaderArchiveName, out MaterialShaderSelector? selector) ? selector.Select(material, drawTime) : -1;
 
     /// <summary>The material block layout of the material's shading model, or null when the archive or model is not in the set or declares none.</summary>
     public MaterialBlockLayout? LayoutOf(Material material)

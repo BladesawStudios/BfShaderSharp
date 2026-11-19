@@ -17,9 +17,30 @@ public static class ModelImporter
         BlobKey skeleton = Skeleton(context.Pack, model.Skeleton);
         List<MaterialRef> materials = [.. model.Materials.Select(m => new MaterialRef(m.Value.Name, MaterialImporter.Import(context, m.Value)))];
         List<ShapeRef> shapes = [.. model.Shapes.Select(s => new ShapeRef(s.Key, s.Value.MaterialIndex, s.Value.BoneIndex, ShapeImporter.Import(context.Pack, model, s.Value)))];
+        SelectPassPrograms(context, model);
         RecordWriter writer = new();
         new ModelRecord(model.Name, model.Flags, model.TotalVertexCount, skeleton, shapes, materials).Write(writer);
         return context.Pack.Add(writer.ToArray(), BlobCodec.Raw);
+    }
+
+    /// <summary>The draw-time options of a shape in one pass: its skin weight count and the pass.</summary>
+    public static Dictionary<string, string> PassOptions(int skinCount, string assignType) =>
+        new() { ["gsys_weight"] = skinCount.ToString(System.Globalization.CultureInfo.InvariantCulture), ["gsys_assign_type"] = assignType };
+
+    // The program of every pass for every shape, so the prepared shader file holds what a renderer draws each shape with.
+    private static void SelectPassPrograms(AssetContext context, ResModel model)
+    {
+        if (context.AssignTypes.Count == 0) return;
+        foreach (var shape in model.Shapes.Select(s => s.Value))
+        {
+            if (shape.MaterialIndex >= model.Materials.Count) continue;
+            var material = model.Materials[shape.MaterialIndex].Value;
+            foreach (string pass in context.AssignTypes)
+            {
+                int program = context.Shaders.Select(material, PassOptions(shape.VertexSkinCount, pass));
+                context.Programs.Add(material.ShaderAssign.ShaderArchiveName, material.ShaderAssign.ShadingModelName, program);
+            }
+        }
     }
 
     private static BlobKey Skeleton(PackWriter pack, Skeleton skeleton)
