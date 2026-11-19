@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BfShaderSharp.Materials\BfShaderSharp.Materials.csproj" />
+    <ProjectReference Include="..\..\lib\vendor\BymlSharp\src\BymlSharp\BymlSharp.csproj" />
     <ProjectReference Include="..\..\lib\vendor\ZsDicSharp\src\ZsDicSharp\ZsDicSharp.csproj" />
     <ProjectReference Include="..\..\lib\vendor\BfresSharp\lib\vendor\BntxSharp\src\BntxSharp\BntxSharp.csproj" />
     <ProjectReference Include="..\..\lib\vendor\BfresSharp\lib\vendor\McSharp\src\McSharp\McSharp.csproj" />

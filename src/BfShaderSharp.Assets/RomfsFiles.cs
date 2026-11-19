@@ -46,6 +46,9 @@ public sealed class RomfsFiles : IDisposable
         new[] { ("Tex", ".bntx.zs"), ("Tex", ".bntx"), ("TexToGo", ".txtg"), ("TexToGo", ".bntx.zs"), ("TexToGo", ".bntx") }
             .Select(place => Path.Combine(Root, place.Item1, name + place.Item2)).FirstOrDefault(File.Exists);
 
+    // The baked-lighting tile files of a game that has them (the Bake/Scene folder of Tears of the Kingdom), in name order.
+    public IReadOnlyList<string> BakeTiles() => [.. Files("Bake/Scene", "*.bkres.zs").Order(StringComparer.Ordinal)];
+
     // The file name up to its first dot: Land_A.Land_A_01.bfres.zs is Land_A.
     public static string StemOf(string path)
     {
