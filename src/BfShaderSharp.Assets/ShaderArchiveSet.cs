@@ -22,6 +22,9 @@ public sealed class ShaderArchiveSet
 
     public IReadOnlyList<(string Name, BlobKey Source)> Sources => _sources;
 
+    /// <summary>A set with no archives, for preparations that select no programs.</summary>
+    public static ShaderArchiveSet Empty => new();
+
     public static ShaderArchiveSet Load(RomfsFiles romfs, IReadOnlyDictionary<ulong, string> names)
     {
         ShaderArchiveSet set = new();

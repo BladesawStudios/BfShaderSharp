@@ -37,6 +37,8 @@ switch (args[0])
         return Select();
     case "assets" when args.Length >= 3:
         return AssetsCommand.Run(args);
+    case "system" when args.Length >= 3:
+        return AssetsCommand.System(args);
     case "model" when args.Length >= 4:
         return AssetsCommand.Model(args);
     case "options":

@@ -32,6 +32,14 @@ internal static class AssetsCommand
         return 0;
     }
 
+    // bfshader system: prepares the data of a romfs that belongs to no model (the cloud dome's masks) into a pack of its own.
+    internal static int System(string[] args)
+    {
+        using FileStream output = File.Create(args[2]);
+        foreach ((string kind, int count) in SystemAssetPreparer.Prepare(args[1], output)) Console.WriteLine($"{count} {kind} entries");
+        return 0;
+    }
+
     // bfshader model: prepares one model file that is not in the dump, such as a modded one, into a pack of its own.
     internal static int Model(string[] args)
     {

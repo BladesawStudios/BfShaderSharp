@@ -108,6 +108,9 @@ public sealed class AssetPack : IDisposable
 
     public ShapeAnimRecord? ShapeAnim(string name) => Find(PackEntryKind.ShapeAnim, name) is { } entry ? Record(entry.Key, ShapeAnimRecord.Read) : null;
 
+    /// <summary>The bytes of a game data entry, or null when the pack has none by that name.</summary>
+    public byte[]? GameData(string name) => Find(PackEntryKind.GameData, name) is { } entry ? Bytes(entry.Key) : null;
+
     public MaterialRecord Material(BlobKey key) => Record(key, MaterialRecord.Read);
 
     public UniformLayoutRecord UniformLayout(BlobKey key) => Record(key, UniformLayoutRecord.Read);
