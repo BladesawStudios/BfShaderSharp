@@ -4,6 +4,8 @@ using BfShaderSharp.Bnsh;
 using BfShaderSharp.Decompile;
 using BfShaderSharp.Pack;
 using BntxSharp;
+using TexSharp;
+using TxtgSharp;
 
 namespace BfShaderSharp.Assets;
 
@@ -37,32 +39,60 @@ public static class TerrainWaterImporter
         foreach (string name in Textures)
         {
             if (context.Romfs.TextureFile(name) is not { } file) continue;
-            BntxFile bntx = BntxFile.Load(context.Romfs.Read(file));
-            BntxTexture texture = bntx.Textures.FirstOrDefault(t => t.Name == name) ?? bntx.Textures[0];
-            bool mask = texture.Format.ToString().StartsWith("BC4", StringComparison.Ordinal);
-            using MemoryStream bytes = new();
-            for (int slice = 0; slice < texture.ArrayLength; slice++)
-            {
-                if (!mask)
-                {
-                    bytes.Write(texture.GetDeswizzledData(0, slice));
-                    continue;
-                }
-
-                byte[] rgba = BntxTextureExtensions.ToRgba8(texture, 0, slice);
-                for (int i = 0; i < texture.Width * texture.Height; i++) bytes.WriteByte(rgba[i * 4]);
-            }
-
+            (string format, int width, int height, int layers, byte[] data) = Load(context.Romfs, file, name);
             RecordWriter writer = new();
-            writer.String(mask ? "R8" : texture.Format.ToString());
-            writer.U32((uint)texture.Width);
-            writer.U32((uint)texture.Height);
-            writer.U32((uint)texture.ArrayLength);
-            writer.Bytes(bytes.GetBuffer().AsSpan(0, (int)bytes.Length));
+            writer.String(format);
+            writer.U32((uint)width);
+            writer.U32((uint)height);
+            writer.U32((uint)layers);
+            writer.Bytes(data);
             context.Pack.AddEntry(PackEntryKind.GameData, EntryName(name), context.Pack.Add(writer.ToArray()));
         }
 
         return true;
+    }
+
+    // The format name, size, slice count and mip 0 of every slice. The texture is a BNTX or a TXTG; a BC4 mask is decoded to one byte per texel.
+    private static (string Format, int Width, int Height, int Layers, byte[] Data) Load(RomfsFiles romfs, string file, string name)
+    {
+        using MemoryStream bytes = new();
+        if (file.EndsWith(".txtg", StringComparison.OrdinalIgnoreCase))
+        {
+            TxtgFile txtg = TxtgFile.FromBytes(romfs.Read(file));
+            bool bc4 = txtg.Format == TxtgFormat.Bc4Unorm;
+            foreach (TxtgSurface surface in txtg.Surfaces.Where(s => s.MipLevel == 0).OrderBy(s => s.ArrayIndex))
+            {
+                if (!bc4)
+                {
+                    bytes.Write(surface.Data);
+                    continue;
+                }
+
+                byte[] rgba = TextureDecoder.ToRgba8(TextureFormat.Bc4, surface.Data, txtg.Width, txtg.Height, false);
+                for (int i = 0; i < txtg.Width * txtg.Height; i++) bytes.WriteByte(rgba[i * 4]);
+            }
+
+            return (bc4 ? "R8" : txtg.Format.ToString(), txtg.Width, txtg.Height, txtg.LayerCount, bytes.ToArray());
+        }
+
+        BntxFile bntx = BntxFile.Load(romfs.Read(file));
+        BntxTexture texture = bntx.Textures.FirstOrDefault(t => t.Name == name) ?? bntx.Textures[0];
+        bool mask = texture.Format.ToString().StartsWith("BC4", StringComparison.Ordinal);
+        for (int slice = 0; slice < texture.ArrayLength; slice++)
+        {
+            if (!mask)
+            {
+                bytes.Write(texture.GetDeswizzledData(0, slice));
+                continue;
+            }
+
+            byte[] rgba = texture.ToRgba8(0, slice);
+            for (int i = 0; i < texture.Width * texture.Height; i++) bytes.WriteByte(rgba[i * 4]);
+        }
+
+        // BNTX names the channels of a format with separators (R16_G16_B16_A16_FLOAT); the renderer's name for it has none.
+        string format = mask ? "R8" : System.Text.RegularExpressions.Regex.Replace(texture.Format.ToString(), @"(?<=[RGBA]\d+)_(?=[RGBA]\d)", "");
+        return (format, texture.Width, texture.Height, texture.ArrayLength, bytes.ToArray());
     }
 
     /// <summary>Reads a texture stored by <see cref="Import"/>.</summary>
