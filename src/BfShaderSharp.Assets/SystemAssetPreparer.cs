@@ -7,10 +7,10 @@ namespace BfShaderSharp.Assets;
 /// <remarks>The library writes nowhere but the stream it is given. A game that lacks a kind of data has no entries of that kind, and the result says how many entries each kind has.</remarks>
 public static class SystemAssetPreparer
 {
-    public static IReadOnlyDictionary<string, int> Prepare(string romfs, Stream output) => Prepare(romfs, output, [], 0, []);
+    public static IReadOnlyDictionary<string, int> Prepare(string romfs, Stream output) => Prepare(romfs, output, [], 0, [], [], []);
 
     /// <summary>As <see cref="Prepare(string, Stream)"/>, also importing the baked lighting (its index, and the data of each tile named) and the packs of the actors named.</summary>
-    public static IReadOnlyDictionary<string, int> Prepare(string romfs, Stream output, IReadOnlyCollection<string> bakeTiles, int parallelism, IReadOnlyCollection<string> actors)
+    public static IReadOnlyDictionary<string, int> Prepare(string romfs, Stream output, IReadOnlyCollection<string> bakeTiles, int parallelism, IReadOnlyCollection<string> actors, IReadOnlyCollection<string> effectFiles, IReadOnlyCollection<string> effectTextures)
     {
         using RomfsFiles files = new(romfs);
         PackWriter pack = new(output);
@@ -22,6 +22,7 @@ public static class SystemAssetPreparer
         counts["AglShader"] = AglShaderImporter.Import(context).Stored;
         counts["Grass"] = GrassShaderImporter.Import(context) ? 1 : 0;
         counts["TerrainWater"] = TerrainWaterImporter.Import(context) ? 1 : 0;
+        EffectImporter.Import(context, effectFiles, effectTextures);
         pack.Finish();
         return counts;
     }
