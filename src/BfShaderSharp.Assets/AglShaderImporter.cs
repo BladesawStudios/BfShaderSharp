@@ -154,7 +154,7 @@ public static class AglShaderImporter
             {
                 SharcVariation compiled = file.Variation(program, variation, stage);
                 if (compiled.ByteCode.Length == 0) continue;
-                Add(EntryName(name, stage == SharcStage.Pixel ? "frag" : "vert"), Encoding.UTF8.GetBytes(Fold(ShaderDecompiler.ToGlsl(compiled.ToStageCode()), Constants(compiled))));
+                Add(EntryName(name, stage == SharcStage.Pixel ? "frag" : "vert"), Encoding.UTF8.GetBytes(Fold(ShaderDecompiler.ToGlsl(compiled.ToStageCode(), debug: true), Constants(compiled))));
                 written++;
             }
 
