@@ -1,5 +1,6 @@
 using System.Text;
 using BfShaderSharp.Binary;
+using BfShaderSharp.Bnsh;
 using BfShaderSharp.Errors;
 
 namespace BfShaderSharp.Sharc;
@@ -14,6 +15,7 @@ internal static class SharcbReader
 {
     private const uint ControlMagic = 0x98761234;
     private const int ControlProgramSize = 0x38;
+    private const int MaxwellCodeSize = 0x704;
 
     // Reads the variation list that starts at the offset; next is the offset of the section after it.
     internal static List<SharcVariation> ReadVariations(ByteView view, long offset, long dataOffset, out long next)
@@ -40,8 +42,12 @@ internal static class SharcbReader
         ReadOnlyMemory<byte> control = view.Bytes(pos + view.I32(pos + 12), view.Count(pos + 8));
         ByteView controlView = new(control);
         if (control.Length < ControlProgramSize + 4 || controlView.U32(0) != ControlMagic) throw new BfShaderFormatException("Stage control code is not an NVN control block", pos + 12);
-        return new SharcVariation((SharcStage)type, view.Bytes(byteCode, controlView.U32(ControlProgramSize)), control,
-            Blocks(view, pos + 20, pos), Symbols(view, pos + 32, pos), Symbols(view, pos + 44, pos), Symbols(view, pos + 56, pos), Symbols(view, pos + 68, pos));
+        // A Switch 1 control block is the larger one of the Maxwell compiler, which keeps the size of the code at 0x704 and leaves the Ampere field empty.
+        bool maxwell = controlView.U32(ControlProgramSize) == 0 && control.Length > MaxwellCodeSize + 4;
+        uint size = maxwell ? controlView.U32(MaxwellCodeSize) : controlView.U32(ControlProgramSize);
+        return new SharcVariation((SharcStage)type, view.Bytes(byteCode, size), control,
+            Blocks(view, pos + 20, pos), Symbols(view, pos + 32, pos), Symbols(view, pos + 44, pos), Symbols(view, pos + 56, pos), Symbols(view, pos + 68, pos),
+            maxwell ? ShaderArchitecture.Maxwell : ShaderArchitecture.Ampere);
     }
 
     // A list is a count followed by the offset of its first entry from the start of the variation body.

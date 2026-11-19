@@ -19,6 +19,7 @@ public static class SystemAssetPreparer
         (int placements, _) = BakeImporter.Import(context, bakeTiles, parallelism > 0 ? parallelism : Environment.ProcessorCount);
         counts["Bake placements"] = placements;
         counts["Actor"] = actors.Count(actor => ActorImporter.Import(context, actor));
+        counts["AglShader"] = AglShaderImporter.Import(context).Stored;
         pack.Finish();
         return counts;
     }
