@@ -25,8 +25,8 @@ public static class ActorImporter
     /// <summary>The model and animation archives of an actor, or null when it has no pack or its pack names no real model.</summary>
     public static Resolved? Resolve(RomfsFiles romfs, string actor)
     {
-        string path = Path.Combine(romfs.Root, PackPath(actor));
-        if (!File.Exists(path)) return null;
+        string? path = romfs.Resolve(PackPath(actor));
+        if (path is null) return null;
         SarcFile sarc = SarcFile.FromBinary(romfs.Read(path));
         List<string> entries = [.. sarc.Entries.Select(e => e.Name)];
         if (ModelInfoKey(sarc, entries, actor) is not { } modelInfoKey) return null;
@@ -47,8 +47,8 @@ public static class ActorImporter
     {
         foreach (string name in new[] { actor, model })
         {
-            string path = Path.Combine(romfs.Root, PackPath(name));
-            if (!File.Exists(path)) continue;
+            string? path = romfs.Resolve(PackPath(name));
+            if (path is null) continue;
             try
             {
                 List<(string, byte[])> found = [.. SarcFile.FromBinary(romfs.Read(path)).Entries
@@ -67,7 +67,7 @@ public static class ActorImporter
     /// <summary>Stores what the actor's pack says; returns false when the actor has no pack at all.</summary>
     public static bool Import(AssetContext context, string actor)
     {
-        if (!File.Exists(Path.Combine(context.Romfs.Root, PackPath(actor)))) return false;
+        if (context.Romfs.Resolve(PackPath(actor)) is null) return false;
         Resolved? resolved = Resolve(context.Romfs, actor);
         IReadOnlyList<(string File, byte[] Data)> physics = Physics(context.Romfs, actor, resolved?.ModelName ?? actor);
         RecordWriter writer = new();

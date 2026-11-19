@@ -29,7 +29,7 @@ public sealed class UnifyTex
     /// <summary>Reads the romfs's table; empty when the game has none.</summary>
     public static UnifyTex Load(RomfsFiles romfs)
     {
-        string? file = new[] { ".zs", "" }.Select(e => System.IO.Path.Combine(romfs.Root, Path + e)).FirstOrDefault(File.Exists);
+        string? file = new[] { ".zs", "" }.Select(e => romfs.Resolve(Path + e)).FirstOrDefault(file => file is not null);
         return file is null ? Empty : Parse(romfs.Read(file));
     }
 

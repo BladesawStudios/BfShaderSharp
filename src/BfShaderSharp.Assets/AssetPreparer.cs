@@ -14,7 +14,7 @@ public static class AssetPreparer
 {
     public static AssetResult Prepare(AssetOptions options, Stream output, Action<ProgramUse>? modelsDone = null)
     {
-        using RomfsFiles romfs = new(options.Romfs);
+        using RomfsFiles romfs = new(options.Romfs, options.Layers);
         Dictionary<ulong, string> names = romfs.ExternalNames();
         ShaderArchiveSet shaders = ShaderArchiveSet.Load(romfs, names);
         PackWriter pack = new(output, options.Quality);

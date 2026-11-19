@@ -22,6 +22,7 @@ public static class SystemAssetPreparer
         counts["Actor"] = actors.Count(actor => ActorImporter.Import(context, actor));
         counts["AglShader"] = AglShaderImporter.Import(context).Stored;
         counts["Grass"] = GrassShaderImporter.Import(context) ? 1 : 0;
+        counts["Shading"] = ShadingModelImporter.Import(context);
         counts["TerrainWater"] = TerrainWaterImporter.Import(context) ? 1 : 0;
         EffectImporter.Import(context, effectFiles, effectTextures);
         pack.Finish();
