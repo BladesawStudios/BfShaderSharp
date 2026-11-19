@@ -17,6 +17,7 @@ public static class SystemAssetPreparer
         AssetContext context = new(pack, files, ShaderArchiveSet.Empty, new Dictionary<ulong, string>(), TextureStorage.Linear);
         Dictionary<string, int> counts = new() { [CloudMaskImporter.Group] = CloudMaskImporter.Import(context) };
         (int placements, _) = BakeImporter.Import(context, bakeTiles, parallelism > 0 ? parallelism : Environment.ProcessorCount);
+        counts[SystemTextureImporter.Group] = SystemTextureImporter.Import(context);
         counts["Bake placements"] = placements;
         counts["Actor"] = actors.Count(actor => ActorImporter.Import(context, actor));
         counts["AglShader"] = AglShaderImporter.Import(context).Stored;
