@@ -23,30 +23,41 @@ public static class BakeImporter
     public static string TileEntry(string tile) => $"Bake/tile/{tile}";
 
     /// <summary>Stores the index of every tile and the data of the tiles named; returns the number of placements indexed and the tiles that could not be read.</summary>
-    public static (int Placements, List<string> Skipped) Import(AssetContext context, IReadOnlyCollection<string> tiles, int parallelism)
+    public static (int Placements, List<string> Skipped) Import(AssetContext context, IReadOnlyCollection<string> tiles, int parallelism) => Import(context, tiles, parallelism, true);
+
+    /// <summary>As <see cref="Import(AssetContext, IReadOnlyCollection{string}, int)"/>; without <paramref name="writeIndex"/> only the tiles named are stored, which is cheap when the index is kept elsewhere.</summary>
+    public static (int Placements, List<string> Skipped) Import(AssetContext context, IReadOnlyCollection<string> tiles, int parallelism, bool writeIndex)
     {
         string[] files = [.. context.Romfs.BakeTiles()];
         if (files.Length == 0) return (0, []);
         string[] names = [.. files.Select(TileName)];
-        ConcurrentBag<(ulong Hash, int Tile)> entries = [];
-        ConcurrentBag<string> skipped = [];
-        Parallel.For(0, files.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, parallelism) }, i =>
+        int placements = 0;
+        List<string> skippedTiles = [];
+        if (writeIndex)
         {
-            try
+            ConcurrentBag<(ulong Hash, int Tile)> entries = [];
+            ConcurrentBag<string> skipped = [];
+            Parallel.For(0, files.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, parallelism) }, i =>
             {
-                foreach (Byml model in Models(Read(context.Romfs, files[i])))
-                    if (ParseGuid(model.AsMap["Guid"].String) is { } hash) entries.Add((hash, i));
-            }
-            catch (Exception ex) when (ex is InvalidDataException or KeyNotFoundException or InvalidOperationException or IOException)
-            {
-                skipped.Add($"{names[i]}: {ex.Message}");
-            }
-        });
+                try
+                {
+                    foreach (Byml model in Models(Read(context.Romfs, files[i])))
+                        if (ParseGuid(model.AsMap["Guid"].String) is { } hash) entries.Add((hash, i));
+                }
+                catch (Exception ex) when (ex is InvalidDataException or KeyNotFoundException or InvalidOperationException or IOException)
+                {
+                    skipped.Add($"{names[i]}: {ex.Message}");
+                }
+            });
 
-        (ulong Hash, int Tile)[] sorted = [.. entries.GroupBy(e => e.Hash).Select(g => g.First()).OrderBy(e => e.Hash)];
-        context.Pack.AddEntry(PackEntryKind.GameData, IndexEntry, context.Pack.Add(WriteIndex(names, sorted)));
+            (ulong Hash, int Tile)[] sorted = [.. entries.GroupBy(e => e.Hash).Select(g => g.First()).OrderBy(e => e.Hash)];
+            context.Pack.AddEntry(PackEntryKind.GameData, IndexEntry, context.Pack.Add(WriteIndex(names, sorted)));
+            placements = sorted.Length;
+            skippedTiles = [.. skipped.Order(StringComparer.Ordinal)];
+        }
+
         foreach (string tile in tiles) ImportTile(context, files[Array.IndexOf(names, tile)], tile);
-        return (sorted.Length, [.. skipped.Order(StringComparer.Ordinal)]);
+        return (placements, skippedTiles);
     }
 
     private static void ImportTile(AssetContext context, string file, string tile)
