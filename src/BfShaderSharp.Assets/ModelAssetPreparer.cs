@@ -22,7 +22,7 @@ public static class ModelAssetPreparer
         Dictionary<ulong, string> names = romfs.ExternalNames();
         ShaderArchiveSet shaders = ShaderArchiveSet.Load(romfs, names);
         PackWriter pack = new(output, options.Quality);
-        AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel) { Unify = UnifyTex.Load(romfs) };
+        AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel, options.AssignTypes) { Unify = UnifyTex.Load(romfs) };
         foreach ((string archive, BlobKey source) in shaders.Sources) pack.AddEntry(PackEntryKind.ShaderSource, archive, source);
         ModelFileImporter models = new(context);
         byte[] bytes = model.ToArray();
