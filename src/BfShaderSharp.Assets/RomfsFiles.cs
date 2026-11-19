@@ -30,12 +30,14 @@ public sealed class RomfsFiles : IDisposable
     public IReadOnlyList<string> ModelFiles(IReadOnlyList<string> patterns) =>
         [.. Files("Model", "*.bfres*").Where(path => patterns.Count == 0 || patterns.Any(p => FileSystemName.MatchesSimpleExpression(p, StemOf(path), true))).Order(StringComparer.Ordinal)];
 
-    public IReadOnlyList<string> TextureFiles() => [.. Files("Tex", "*.bntx*").Order(StringComparer.Ordinal)];
+    // Tex holds BNTX files; a game with a TexToGo folder (Tears of the Kingdom) keeps its material textures there as TXTG or BNTX files.
+    public IReadOnlyList<string> TextureFiles() => [.. Files("Tex", "*.bntx*").Concat(Files("TexToGo", "*.txtg")).Concat(Files("TexToGo", "*.bntx*")).Order(StringComparer.Ordinal)];
 
     public IReadOnlyList<string> ShaderFiles() => [.. Files("Shader", "*.bfsha*").Order(StringComparer.Ordinal)];
 
     public string? TextureFile(string name) =>
-        new[] { ".bntx.zs", ".bntx" }.Select(extension => Path.Combine(Root, "Tex", name + extension)).FirstOrDefault(File.Exists);
+        new[] { ("Tex", ".bntx.zs"), ("Tex", ".bntx"), ("TexToGo", ".txtg"), ("TexToGo", ".bntx.zs"), ("TexToGo", ".bntx") }
+            .Select(place => Path.Combine(Root, place.Item1, name + place.Item2)).FirstOrDefault(File.Exists);
 
     // The file name up to its first dot: Land_A.Land_A_01.bfres.zs is Land_A.
     public static string StemOf(string path)
