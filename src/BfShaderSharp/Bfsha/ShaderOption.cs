@@ -14,29 +14,29 @@ public readonly struct ShaderOption
     internal const int Size = 0x28;
     private readonly ByteView _view;
     private readonly long _at;
+    private readonly OptionLayout _layout;
 
-    internal ShaderOption(ByteView view, long at, string name)
+    internal ShaderOption(ByteView view, long at, string name, OptionLayout layout)
     {
         _view = view;
         _at = at;
         Name = name;
+        _layout = layout;
     }
 
     public string Name { get; }
 
-    internal static ShaderOption Read(ByteView view, long at, string name) => new(view, at, name);
-
     public ResDict Choices => new(_view, (long)_view.U64(_at + 8));
 
-    public int DefaultChoice => (short)_view.U16(_at + 0x1A);
+    public int DefaultChoice => _layout.WideCounts ? (short)_view.U16(_at + _layout.DefaultChoice) : _view.U8(_at + _layout.DefaultChoice);
 
-    public byte KeyOffset => _view.U8(_at + 0x1F);
+    public byte KeyOffset => _view.U8(_at + _layout.KeyOffset);
 
     public uint Mask => _view.U32(_at + 0x20);
 
-    public byte KeyIndex => _view.U8(_at + 0x24);
+    public byte KeyIndex => _view.U8(_at + _layout.KeyIndex);
 
-    public byte Shift => _view.U8(_at + 0x25);
+    public byte Shift => _view.U8(_at + _layout.Shift);
 
     public int ChoiceOf(uint keyWord) => (int)((keyWord & Mask) >> Shift);
 

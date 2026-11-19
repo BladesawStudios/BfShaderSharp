@@ -25,10 +25,11 @@ public static class AssetPreparer
         ModelFileImporter models = new(context);
         IReadOnlyList<string> files = romfs.ModelFiles(options.ModelPatterns);
         Parallel.ForEach(files, parallel, models.Import);
+        int embedded = files.Select(RomfsFiles.StemOf).Distinct().SelectMany(romfs.ModelTextureFiles).Sum(texture => TextureImporter.ImportEmbedded(context, romfs.Read(texture), texture));
         modelsDone?.Invoke(context.Programs);
         (int textures, List<string> missing) = ImportTextures(context, options, parallel);
         pack.Finish();
-        return new AssetResult(files.Count, models.Models, models.Materials, textures, models.Animations, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);
+        return new AssetResult(files.Count, models.Models, models.Materials, textures + embedded, models.Animations, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);
     }
 
     internal static (int Textures, List<string> Missing) ImportTextures(AssetContext context, AssetOptions options, ParallelOptions parallel)

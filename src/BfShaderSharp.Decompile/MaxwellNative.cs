@@ -21,7 +21,7 @@ internal static class MaxwellNative
         bool compute = code.Stage == BfShaderSharp.Bnsh.ShaderStage.Compute;
         TranslationFlags flags = (debug ? TranslationFlags.DebugMode : TranslationFlags.None) | (compute ? TranslationFlags.Compute : TranslationFlags.None);
         var options = new TranslationOptions(TargetLanguage.Glsl, TargetApi.OpenGL, flags);
-        var access = new GpuAccessor(bytes[PrefixSize..].ToArray(), [], ComputeControl.WorkgroupSize(code.ControlCode.Span));
+        var access = new GpuAccessor(bytes[PrefixSize..].ToArray(), ImmediateConstants.Read(code.ControlCode.Span, bytes), ComputeControl.WorkgroupSize(code.ControlCode.Span));
         try
         {
             return Translator.CreateContext(0, access, options).Translate().CodeUtf8!;
