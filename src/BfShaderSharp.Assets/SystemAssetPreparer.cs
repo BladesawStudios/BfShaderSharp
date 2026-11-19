@@ -1,4 +1,5 @@
 using BfShaderSharp.Pack;
+using BfShaderSharp.Pack.Records;
 
 namespace BfShaderSharp.Assets;
 
