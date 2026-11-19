@@ -195,6 +195,51 @@ public sealed class SwitchOneTests
     }
 
     [TotkFact]
+    public void ATotkModelKeepsItsBuffersWhereTheMeshCodecLeftThem()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"totk-{Guid.NewGuid():N}.bfap");
+        try
+        {
+            using (FileStream stream = File.Create(path)) AssetPreparer.Prepare(new AssetOptions(GameRomfs.Totk!, ["Npc_Zelda_AncientHyrule*"], TextureSelection.None), stream);
+            using AssetPack pack = AssetPack.Open(path);
+            PackEntry entry = pack.Of(PackEntryKind.Model).First(e => e.Name == "Npc_Zelda_AncientHyrule");
+            ModelRecord model = pack.Record(entry.Key, ModelRecord.Read);
+            Assert.NotEmpty(model.Shapes);
+            foreach (ShapeRef reference in model.Shapes)
+            {
+                ShapeRecord shape = pack.Shape(reference.Shape);
+                AttribRecord position = shape.Attribs.Single(a => a.Name == "_p0");
+                Assert.Equal(0x811u, position.Format);
+                byte[] data = pack.Bytes(shape.Streams[position.Stream].Data);
+                int stride = shape.Streams[position.Stream].Stride;
+                for (int v = 0; v < shape.VertexCount; v++)
+                {
+                    for (int axis = 0; axis < 3; axis++)
+                    {
+                        float value = BitConverter.ToSingle(data, v * stride + position.Offset + axis * 4);
+                        Assert.True(float.IsFinite(value) && Math.Abs(value) < 100, $"{reference.Name} vertex {v} axis {axis} is {value}");
+                    }
+                }
+
+                foreach (MeshRecord mesh in shape.Meshes)
+                {
+                    byte[] indices = pack.Bytes(mesh.Indices);
+                    int size = mesh.IndexFormat == 2 ? 4 : mesh.IndexFormat == 1 ? 2 : 1;
+                    for (int i = 0; i < mesh.IndexCount; i++)
+                    {
+                        long index = size == 4 ? BitConverter.ToUInt32(indices, i * 4) : size == 2 ? BitConverter.ToUInt16(indices, i * 2) : indices[i];
+                        Assert.True(mesh.FirstVertex + index < shape.VertexCount, $"{reference.Name} index {i} is {index}");
+                    }
+                }
+            }
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [TotkFact]
     public void ATotkModelPreparesWithItsTxtgTextures()
     {
         string path = Path.Combine(Path.GetTempPath(), $"totk-{Guid.NewGuid():N}.bfap");
