@@ -20,6 +20,7 @@ public static class SystemAssetPreparer
         counts["Bake placements"] = placements;
         counts["Actor"] = actors.Count(actor => ActorImporter.Import(context, actor));
         counts["AglShader"] = AglShaderImporter.Import(context).Stored;
+        counts["Grass"] = GrassShaderImporter.Import(context) ? 1 : 0;
         pack.Finish();
         return counts;
     }
