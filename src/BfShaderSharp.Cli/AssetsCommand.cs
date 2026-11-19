@@ -36,7 +36,7 @@ internal static class AssetsCommand
     internal static int System(string[] args)
     {
         using FileStream output = File.Create(args[2]);
-        foreach ((string kind, int count) in SystemAssetPreparer.Prepare(args[1], output, Values(args, "--bake-tile"), int.TryParse(Values(args, "--threads").FirstOrDefault(), out int t) ? t : 0, Values(args, "--actor"))) Console.WriteLine($"{count} {kind} entries");
+        foreach ((string kind, int count) in SystemAssetPreparer.Prepare(args[1], output, Values(args, "--bake-tile"), int.TryParse(Values(args, "--threads").FirstOrDefault(), out int t) ? t : 0, [.. Values(args, "--actor"), .. Values(args, "--actor-list").SelectMany(File.ReadAllLines).Where(l => l.Trim().Length > 0)])) Console.WriteLine($"{count} {kind} entries");
         return 0;
     }
 
@@ -61,6 +61,12 @@ internal static class AssetsCommand
         {
             foreach (IGrouping<PackEntryKind, PackEntry> kind in pack.Entries.GroupBy(e => e.Kind)) Console.WriteLine($"{kind.Count()} {kind.Key} entries");
             Console.WriteLine($"{pack.BlobCount} blobs, {pack.Length / 1048576.0:F0} MB");
+            return 0;
+        }
+
+        if (args[2] == "--game-data")
+        {
+            foreach (PackEntry entry in pack.Entries.Where(e => e.Kind == PackEntryKind.GameData).OrderBy(e => e.Name, StringComparer.Ordinal)) Console.WriteLine(entry.Name);
             return 0;
         }
 
