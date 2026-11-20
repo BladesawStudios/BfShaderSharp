@@ -15,7 +15,7 @@ namespace BfShaderSharp.Preparation;
 /// translation and one blob. Safe to use from many threads; threads that ask for the same stage wait for the one
 /// translating it. A stage that fails is remembered as failed and the reason is reported once.
 /// </remarks>
-internal sealed class StageCompiler(BlobPool blobs, StageText text = StageText.Raw)
+internal sealed class StageCompiler(BlobPool blobs, StageText text = StageText.Raw, string? cacheDirectory = null)
 {
     private readonly ConcurrentDictionary<string, Lazy<(int Blob, string? Error)>> _stages = new();
     private int _decompiled;
@@ -47,13 +47,52 @@ internal sealed class StageCompiler(BlobPool blobs, StageText text = StageText.R
         return Convert.ToBase64String(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(builder.ToString())));
     }
 
+    // The translation of a stage is kept in a folder when one is given, named by the stage's identity, so a program that shares stages with one prepared before (in this run or an earlier one) is not translated again.
+    // The text of a stage depends on nothing but its identity and the way the text is made, which the name includes; a file is written whole and moved into place, so a half-written one is never read.
+    private string? CacheFile(ShaderStageCode code, StageReflection? reflection)
+    {
+        if (cacheDirectory is null) return null;
+        string identity = $"{CacheFormat}:{(int)text}:{(int)code.Stage}:{Convert.ToHexString(SHA256.HashData(code.ByteCode.Span))}:{(text == StageText.Reflected ? Signature(reflection) : "")}";
+        return Path.Combine(cacheDirectory, Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(identity)))[..32] + ".glsl");
+    }
+
+    // Bumped when the decompiler's output changes, so older cached text is not reused.
+    private const int CacheFormat = 1;
+
+    private static void Keep(string? file, ReadOnlySpan<byte> bytes)
+    {
+        if (file is null) return;
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            string temporary = file + "." + Environment.CurrentManagedThreadId + ".tmp";
+            File.WriteAllBytes(temporary, bytes.ToArray());
+            File.Move(temporary, file, true);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
+
     private (int Blob, string? Error) Translate(ShaderStageCode code, StageReflection? reflection)
     {
+        string? file = CacheFile(code, reflection);
+        if (file is not null)
+        {
+            try { if (File.Exists(file)) return (blobs.Add(File.ReadAllBytes(file)), null); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+
         Interlocked.Increment(ref _decompiled);
         try
         {
-            if (text == StageText.Reflected) return (blobs.Add(System.Text.Encoding.UTF8.GetBytes(ReflectedGlsl.Extract(code, reflection))), null);
+            if (text == StageText.Reflected)
+            {
+                byte[] reflected = System.Text.Encoding.UTF8.GetBytes(ReflectedGlsl.Extract(code, reflection));
+                Keep(file, reflected);
+                return (blobs.Add(reflected), null);
+            }
+
             using Utf8Code glsl = ShaderDecompiler.ToGlslUtf8(code, debug: true);
+            Keep(file, glsl.Span);
             return (blobs.Add(glsl.Span), null);
         }
         catch (BfShaderFormatException ex)
