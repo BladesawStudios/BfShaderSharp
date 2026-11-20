@@ -7,3 +7,6 @@
 [submodule "lib/vendor/ZstdSharp"]
 	path = lib/vendor/ZstdSharp
 	url = https://github.com/BladesawStudios/ZstdSharp
+[submodule "lib/vendor/BymlSharp"]
+	path = lib/vendor/BymlSharp
+	url = https://github.com/BladesawStudios/BymlSharp

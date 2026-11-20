@@ -20,6 +20,18 @@ public class PackRoundTripTests
     }
 
     [Fact]
+    public void GameDataEntriesComeBackByTheirNames()
+    {
+        string path = Temp();
+        byte[] mask = Enumerable.Range(0, 300).Select(i => (byte)(i * 3)).ToArray();
+        AssetPack pack = Build(path, w => w.AddEntry(PackEntryKind.GameData, "CloudMask/1", w.Add(mask)));
+        Assert.Equal(mask, pack.GameData("CloudMask/1"));
+        Assert.Null(pack.GameData("CloudMask/2"));
+        pack.Dispose();
+        File.Delete(path);
+    }
+
+    [Fact]
     public void BlobsAreStoredOnceAndComeBackDecoded()
     {
         string path = Temp();

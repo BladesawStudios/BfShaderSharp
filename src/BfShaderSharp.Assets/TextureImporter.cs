@@ -14,7 +14,12 @@ namespace BfShaderSharp.Assets;
 /// </remarks>
 public static class TextureImporter
 {
-    public static int Import(AssetContext context, string path) => Import(context, File.ReadAllBytes(path), path);
+    /// <summary>Stores the BNTX files embedded in a BFRES (a Breath of the Wild model keeps its textures in one named Tex.sbfres); returns the number of textures.</summary>
+    public static int ImportEmbedded(AssetContext context, byte[] bfres, string source) =>
+        BfresSharp.BfresFile.Read(bfres).ExternalFiles.Where(e => e.Key.EndsWith(".bntx", StringComparison.OrdinalIgnoreCase)).Sum(e => Import(context, e.Value.Data.ToArray(), source));
+
+    public static int Import(AssetContext context, string path) =>
+        path.EndsWith(".txtg", StringComparison.OrdinalIgnoreCase) ? TxtgImporter.Import(context, path) : Import(context, File.ReadAllBytes(path), path);
 
     /// <summary>Stores a texture file given as bytes; source names it in errors.</summary>
     public static int Import(AssetContext context, byte[] file, string source)

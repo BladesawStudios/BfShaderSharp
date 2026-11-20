@@ -23,6 +23,13 @@ public sealed class ModelFileImporter(AssetContext context)
 
     public int Materials => _materials;
 
+    /// <summary>The name a model file's entries start with: its stem, and for a file whose second name differs from the stem (Npc_Zelda.Npc_Zelda_Black.bfres, a variant of the first) the stem and that name, so the variants of one stem never share an entry name.</summary>
+    public static string EntryName(string stem, string fileName)
+    {
+        string[] parts = fileName.Split('.');
+        return parts.Length > 2 && parts[0] == stem && parts[1].Length > 0 && parts[1] != stem && !parts[1].StartsWith("bfres", StringComparison.OrdinalIgnoreCase) && !parts[1].StartsWith("sbfres", StringComparison.OrdinalIgnoreCase) ? $"{stem}/{parts[1]}" : stem;
+    }
+
     public int Skipped => _skipped;
 
     public int Animations => _animations;
@@ -54,7 +61,8 @@ public sealed class ModelFileImporter(AssetContext context)
             foreach (ResModel model in file.Models.Values)
             {
                 BlobKey key = ModelImporter.Import(context, model);
-                context.Pack.AddEntry(PackEntryKind.Model, file.Models.Count == 1 ? stem : $"{stem}/{model.Name}", key);
+                string name = EntryName(stem, fileName);
+                context.Pack.AddEntry(PackEntryKind.Model, file.Models.Count == 1 ? name : $"{name}/{model.Name}", key);
                 Interlocked.Increment(ref _models);
                 Interlocked.Add(ref _materials, model.Materials.Count);
             }

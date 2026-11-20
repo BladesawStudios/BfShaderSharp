@@ -48,7 +48,7 @@ internal sealed class ModelPreparer(StageCompiler stages, BlobPool blobs, int pa
         {
             if (binary.Code(stage) is not { } code) continue;
             Interlocked.Increment(ref StageCount);
-            var (blob, error) = stages.Compile(code);
+            var (blob, error) = stages.Compile(code, binary.Reflection(stage));
             blobsOfStages[(int)stage] = blob;
             if (error is not null) Failures.Add(new StageFailure(model, variation, stage.ToString(), error));
         }

@@ -9,26 +9,29 @@ namespace BfShaderSharp.Assets;
 /// The model goes through the importers that prepare the dump's models, so its materials pick their shader programs from the
 /// game's shader archives and its uniform blocks, animations and geometry are stored exactly as a dump model's are. The
 /// textures it samples come first from the texture files given with it and the BNTX files embedded in the model file, then
-/// from the romfs by name, then through the unify table; a name found nowhere is reported as missing. The pack holds only this
+/// from the romfs by name (a model of Breath of the Wild's romfs also from the Tex files of <c>textureStem</c>), then through the unify table; a name found nowhere is reported as missing. The pack holds only this
 /// model, so a host opens it beside the pack of the game. The library writes nowhere but the stream it is given.
 /// </remarks>
 public static class ModelAssetPreparer
 {
     private const string BntxMagic = "BNTX";
 
-    public static AssetResult Prepare(AssetOptions options, string name, ReadOnlyMemory<byte> model, IReadOnlyList<byte[]> textureFiles, Stream output, Action<ProgramUse>? modelsDone = null)
+    public static AssetResult Prepare(AssetOptions options, string name, ReadOnlyMemory<byte> model, IReadOnlyList<byte[]> textureFiles, Stream output, Action<ProgramUse>? modelsDone = null, string? textureStem = null)
     {
-        using RomfsFiles romfs = new(options.Romfs);
+        using RomfsFiles romfs = new(options.Romfs, options.Layers);
         Dictionary<ulong, string> names = romfs.ExternalNames();
         ShaderArchiveSet shaders = ShaderArchiveSet.Load(romfs, names);
         PackWriter pack = new(output, options.Quality);
-        AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel) { Unify = UnifyTex.Load(romfs) };
+        AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel, options.AssignTypes) { Unify = UnifyTex.Load(romfs) };
         foreach ((string archive, BlobKey source) in shaders.Sources) pack.AddEntry(PackEntryKind.ShaderSource, archive, source);
         ModelFileImporter models = new(context);
         byte[] bytes = model.ToArray();
         models.Import(name, name, () => bytes);
         modelsDone?.Invoke(context.Programs);
         int textures = options.Textures == TextureSelection.None ? 0 : ImportTextures(context, bytes, textureFiles);
+        // A Breath of the Wild model keeps its textures in the Tex files of its stem in the romfs, which a model file the dump does not name has no way to point at.
+        if (options.Textures != TextureSelection.None && textureStem is not null)
+            textures += romfs.ModelTextureFiles(textureStem).Sum(texture => TextureImporter.ImportEmbedded(context, romfs.Read(texture), texture));
         (int fromRomfs, List<string> missing) = options.Textures == TextureSelection.None ? (0, []) : AssetPreparer.ImportTextures(context, options with { Textures = TextureSelection.Used }, new ParallelOptions { MaxDegreeOfParallelism = options.Parallelism > 0 ? options.Parallelism : Environment.ProcessorCount });
         pack.Finish();
         return new AssetResult(1, models.Models, models.Materials, textures + fromRomfs, models.Animations, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);

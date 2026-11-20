@@ -14,9 +14,11 @@ public readonly struct ShaderProgramBinary
 
     private readonly ByteView _bnsh;
     private readonly long _offset;
+    private readonly uint _codeTarget;
 
-    internal ShaderProgramBinary(ByteView bnsh, long offset)
+    internal ShaderProgramBinary(ByteView bnsh, long offset, uint codeTarget)
     {
+        _codeTarget = codeTarget;
         _bnsh = bnsh;
         _offset = offset;
     }
@@ -24,7 +26,7 @@ public readonly struct ShaderProgramBinary
     public bool Has(ShaderStage stage) => StageOffset(stage) != 0;
 
     public ShaderStageCode? Code(ShaderStage stage) =>
-        StageOffset(stage) is var at and not 0 ? ShaderStageCode.Read(_bnsh, stage, at) : null;
+        StageOffset(stage) is var at and not 0 ? ShaderStageCode.Read(_bnsh, stage, at, _codeTarget) : null;
 
     public StageReflection? Reflection(ShaderStage stage)
     {

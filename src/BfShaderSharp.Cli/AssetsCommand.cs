@@ -15,13 +15,13 @@ internal static class AssetsCommand
         string[] patterns = Values(args, "--model");
         int threads = int.TryParse(Values(args, "--threads").FirstOrDefault(), out int t) ? t : 0;
         TextureSelection textures = args.Contains("--all-textures") ? TextureSelection.All : args.Contains("--no-textures") ? TextureSelection.None : TextureSelection.Used;
-        AssetOptions options = new(args[1], patterns, textures, threads, Storage: args.Contains("--linear-textures") ? TextureStorage.Linear : TextureStorage.Native);
+        AssetOptions options = new(args[1], patterns, textures, threads, Storage: args.Contains("--linear-textures") ? TextureStorage.Linear : TextureStorage.Native, AssignTypes: [.. Values(args, "--pass")]);
         string? shaders = Values(args, "--shaders").FirstOrDefault();
         Stopwatch clock = Stopwatch.StartNew();
         Task<string>? shaderTask = null;
         using FileStream output = File.Create(args[2]);
         // The shader archives are prepared for the programs the models use, once those are known, while the textures are read.
-        AssetResult result = AssetPreparer.Prepare(options, output, use => shaderTask = shaders is null ? null : Task.Run(() => PrepareShaders(args[1], shaders, threads, args.Contains("--all-programs") ? null : use)));
+        AssetResult result = AssetPreparer.Prepare(options, output, use => shaderTask = shaders is null ? null : Task.Run(() => PrepareShaders(args[1], shaders, threads, args.Contains("--all-programs") ? null : use, args.Contains("--reflected") ? StageText.Reflected : StageText.Raw)));
         TimeSpan assets = clock.Elapsed;
         Console.WriteLine($"{result.ModelFiles} model files ({result.Skipped} skipped, {result.Failures.Count} failed): {result.Models} models, {result.Materials} materials, {result.Textures} textures, {result.Animations} animations");
         Console.WriteLine($"{result.BlobsAdded} blobs offered, {result.BlobsStored} stored; {result.PackBytes / 1048576.0:F0} MB in {assets.TotalSeconds:F1} s");
@@ -29,6 +29,14 @@ internal static class AssetsCommand
         if (Values(args, "--missing").FirstOrDefault() is { } report) File.WriteAllLines(report, result.MissingTextures);
         if (result.MissingTextures.Count > 0) Console.WriteLine($"{result.MissingTextures.Count} sampled textures have no file, e.g. {string.Join(", ", result.MissingTextures.Take(3))}");
         if (shaderTask is not null) Console.WriteLine($"{shaderTask.Result}; everything done in {clock.Elapsed.TotalSeconds:F1} s");
+        return 0;
+    }
+
+    // bfshader system: prepares the data of a romfs that belongs to no model (the cloud dome's masks) into a pack of its own.
+    internal static int System(string[] args)
+    {
+        using FileStream output = File.Create(args[2]);
+        foreach ((string kind, int count) in SystemAssetPreparer.Prepare(args[1], output, Values(args, "--bake-tile"), int.TryParse(Values(args, "--threads").FirstOrDefault(), out int t) ? t : 0, [.. Values(args, "--actor"), .. Values(args, "--actor-list").SelectMany(File.ReadAllLines).Where(l => l.Trim().Length > 0)], Values(args, "--effect-file"), Values(args, "--effect-texture"))) Console.WriteLine($"{count} {kind} entries");
         return 0;
     }
 
@@ -56,6 +64,12 @@ internal static class AssetsCommand
             return 0;
         }
 
+        if (args[2] == "--game-data")
+        {
+            foreach (PackEntry entry in pack.Entries.Where(e => e.Kind == PackEntryKind.GameData).OrderBy(e => e.Name, StringComparer.Ordinal)) Console.WriteLine(entry.Name);
+            return 0;
+        }
+
         ModelRecord? model = pack.Model(args[2]);
         if (model is null) return 1;
         Console.WriteLine($"{model.Name}: {model.Shapes.Count} shapes, {model.Materials.Count} materials, {pack.Skeleton(model.Skeleton).Bones.Count} bones");
@@ -69,7 +83,7 @@ internal static class AssetsCommand
     }
 
     // Prepares each BFSHA archive of the romfs's Shader folder, one after another, into a prepared file in the output folder.
-    private static string PrepareShaders(string romfs, string folder, int threads, ProgramUse? use)
+    private static string PrepareShaders(string romfs, string folder, int threads, ProgramUse? use, StageText text)
     {
         Directory.CreateDirectory(folder);
         Stopwatch clock = Stopwatch.StartNew();
@@ -79,7 +93,7 @@ internal static class AssetsCommand
         {
             BfshaFile archive = BfshaFile.Read(files.Read(path));
             using FileStream output = File.Create(Path.Combine(folder, archive.Name + ".bfsp"));
-            programs += ArchivePreparer.Prepare(archive, output, 5, threads, null, use?.Of(archive.Name) ?? (use is null ? null : new Dictionary<string, IReadOnlySet<int>>())).Programs;
+            programs += ArchivePreparer.Prepare(archive, output, 5, threads, null, use?.Of(archive.Name) ?? (use is null ? null : new Dictionary<string, IReadOnlySet<int>>()), text).Programs;
         }
 
         return $"{programs} shader programs in {clock.Elapsed.TotalSeconds:F1} s";

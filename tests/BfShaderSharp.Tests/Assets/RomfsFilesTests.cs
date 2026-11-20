@@ -47,6 +47,15 @@ public sealed class RomfsFilesTests : IDisposable
     }
 
     [Fact]
+    public void AVariantFileOfAStemGetsAnEntryNameOfItsOwn()
+    {
+        Assert.Equal("Npc", ModelFileImporter.EntryName("Npc", "Npc.Npc.bfres.mc"));
+        Assert.Equal("Npc/Npc_Black", ModelFileImporter.EntryName("Npc", "Npc.Npc_Black.bfres.mc"));
+        Assert.Equal("Npc", ModelFileImporter.EntryName("Npc", "Npc.bfres.zs"));
+        Assert.Equal("Animal_Bear", ModelFileImporter.EntryName("Animal_Bear", "Animal_Bear.sbfres"));
+    }
+
+    [Fact]
     public void ReadReturnsUncompressedFilesAsTheyAreAndAGameWithoutAStringTableHasNoNames()
     {
         using RomfsFiles romfs = new(_root);

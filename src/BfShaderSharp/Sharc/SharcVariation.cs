@@ -13,7 +13,8 @@ public sealed record SharcVariation(
     IReadOnlyList<SharcSymbol> Buffers,
     IReadOnlyList<SharcSymbol> Attributes,
     IReadOnlyList<SharcSymbol> Uniforms,
-    IReadOnlyList<SharcSymbol> Samplers)
+    IReadOnlyList<SharcSymbol> Samplers,
+    ShaderArchitecture Architecture = ShaderArchitecture.Ampere)
 {
     /// <summary>The stage code in the form the decompiler takes; every stage a SHARC file holds has one.</summary>
     public ShaderStageCode ToStageCode() => new(Stage switch
@@ -25,5 +26,5 @@ public sealed record SharcVariation(
         SharcStage.Task => ShaderStage.Task,
         SharcStage.Mesh => ShaderStage.Mesh,
         _ => throw new BfShaderUnsupportedException($"Stage kind {(int)Stage} is not decompiled"),
-    }, ByteCode, ControlCode);
+    }, ByteCode, ControlCode, Architecture);
 }

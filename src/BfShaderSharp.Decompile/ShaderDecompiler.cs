@@ -7,7 +7,7 @@ using Ryujinx.Graphics.Shader.Translation;
 
 namespace BfShaderSharp.Decompile;
 
-/// <summary>Decompiles the stage code of a Switch 2 BNSH to GLSL.</summary>
+/// <summary>Decompiles the stage code of a Switch or Switch 2 BNSH to GLSL.</summary>
 /// <remarks>
 /// A graphics stage's byte code is a 0x80-byte header followed by Ampere instructions; a compute stage's is instructions alone. The instructions are lowered to
 /// Maxwell, wrapped with the header's program header, and translated. Control code and immediate constants are not
@@ -42,6 +42,7 @@ public static class ShaderDecompiler
     /// <summary>Decompiles to UTF-8 text in a buffer reused by the next call on the same thread; dispose it when done.</summary>
     public static Utf8Code ToGlslUtf8(ShaderStageCode code, bool debug = false)
     {
+        if (code.Architecture == ShaderArchitecture.Maxwell) return MaxwellNative.Translate(code, debug);
         ReadOnlySpan<byte> bytes = code.ByteCode.Span;
         bool compute = code.Stage == ShaderStage.Compute;
         bool meshStage = code.Stage is ShaderStage.Task or ShaderStage.Mesh;

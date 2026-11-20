@@ -15,7 +15,7 @@ using ZsDicSharp;
 // bfshader list <file.bfsha[.zs]>
 // bfshader prepare <file.bfsha[.zs]|file.sharcb[.zs]|package.sarc[.zs] --entry <name.sharcb>> <out.bfsp> [--quality <0-11>] [--threads <n>]
 // bfshader show <file.bfsp> [<model> <program> <stage>]
-// bfshader assets <romfs> <out.bfap> [--model <pattern>]... [--all-textures|--no-textures] [--linear-textures] [--shaders <folder> [--all-programs]] [--threads <n>]
+// bfshader assets <romfs> <out.bfap> [--model <pattern>]... [--all-textures|--no-textures] [--linear-textures] [--shaders <folder> [--all-programs] [--reflected] [--pass <gsys_assign_type>]...] [--threads <n>]
 // bfshader model <romfs> <model.bfres[.zs]> <out.bfap> [--texture <file.bntx[.zs]>]...
 // bfshader inspect <file.bfap> [<model>]
 // bfshader decompress <file.zs|file.mc> <out>
@@ -37,6 +37,8 @@ switch (args[0])
         return Select();
     case "assets" when args.Length >= 3:
         return AssetsCommand.Run(args);
+    case "system" when args.Length >= 3:
+        return AssetsCommand.System(args);
     case "model" when args.Length >= 4:
         return AssetsCommand.Model(args);
     case "options":

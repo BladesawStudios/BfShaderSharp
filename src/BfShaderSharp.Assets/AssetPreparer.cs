@@ -14,21 +14,22 @@ public static class AssetPreparer
 {
     public static AssetResult Prepare(AssetOptions options, Stream output, Action<ProgramUse>? modelsDone = null)
     {
-        using RomfsFiles romfs = new(options.Romfs);
+        using RomfsFiles romfs = new(options.Romfs, options.Layers);
         Dictionary<ulong, string> names = romfs.ExternalNames();
         ShaderArchiveSet shaders = ShaderArchiveSet.Load(romfs, names);
         PackWriter pack = new(output, options.Quality);
-        AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel);
+        AssetContext context = new(pack, romfs, shaders, names, options.Storage, options.LinearLevel, options.AssignTypes);
         foreach ((string name, BlobKey source) in shaders.Sources) pack.AddEntry(PackEntryKind.ShaderSource, name, source);
         ParallelOptions parallel = new() { MaxDegreeOfParallelism = options.Parallelism > 0 ? options.Parallelism : Environment.ProcessorCount };
         context.Unify = UnifyTex.Load(romfs);
         ModelFileImporter models = new(context);
         IReadOnlyList<string> files = romfs.ModelFiles(options.ModelPatterns);
         Parallel.ForEach(files, parallel, models.Import);
+        int embedded = files.Select(RomfsFiles.StemOf).Distinct().SelectMany(romfs.ModelTextureFiles).Sum(texture => TextureImporter.ImportEmbedded(context, romfs.Read(texture), texture));
         modelsDone?.Invoke(context.Programs);
         (int textures, List<string> missing) = ImportTextures(context, options, parallel);
         pack.Finish();
-        return new AssetResult(files.Count, models.Models, models.Materials, textures, models.Animations, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);
+        return new AssetResult(files.Count, models.Models, models.Materials, textures + embedded, models.Animations, models.Skipped, pack.AddedBlobs, pack.UniqueBlobs, pack.StoredBytes, models.Failures, missing);
     }
 
     internal static (int Textures, List<string> Missing) ImportTextures(AssetContext context, AssetOptions options, ParallelOptions parallel)

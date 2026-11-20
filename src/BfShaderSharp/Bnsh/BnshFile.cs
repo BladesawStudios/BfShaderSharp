@@ -60,7 +60,7 @@ public sealed class BnshFile
     public BnshVariation Variation(int index)
     {
         if ((uint)index >= (uint)VariationCount) throw new ArgumentOutOfRangeException(nameof(index));
-        return new BnshVariation(_view, _variationStart + (long)index * BnshVariation.EntrySize, index);
+        return new BnshVariation(_view, _variationStart + (long)index * BnshVariation.EntrySize, index, CodeTarget);
     }
 
     public IEnumerable<BnshVariation> Variations()

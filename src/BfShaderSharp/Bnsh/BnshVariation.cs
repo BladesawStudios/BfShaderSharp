@@ -9,9 +9,11 @@ public readonly struct BnshVariation
     internal const int EntrySize = 0x40;
     private readonly ByteView _bnsh;
     private readonly long _entry;
+    private readonly uint _codeTarget;
 
-    internal BnshVariation(ByteView bnsh, long entry, int index)
+    internal BnshVariation(ByteView bnsh, long entry, int index, uint codeTarget)
     {
+        _codeTarget = codeTarget;
         _bnsh = bnsh;
         _entry = entry;
         Index = index;
@@ -22,5 +24,5 @@ public readonly struct BnshVariation
     // The file offset of the variation's table entry.
     public long Offset => _entry;
 
-    public ShaderProgramBinary Program => new(_bnsh, (long)_bnsh.U64(_entry + 0x10));
+    public ShaderProgramBinary Program => new(_bnsh, (long)_bnsh.U64(_entry + 0x10), _codeTarget);
 }
